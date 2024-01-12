@@ -10,3 +10,15 @@ www.naver.com$$div[id="search-right-banner"]
 www.naver.com##.Layout-module__column_left___tLO23
 www.naver.com##.Layout-module__content_area___b_3TU:not(#account)
 www.naver.com###widgetboard
+maplestory.nexon.com##.community_wrap
+maplestory.nexon.com###banner_area
+maplestory.nexon.com###issue_tag
+maplestory.nexon.com###section05
+maplestory.nexon.com###sns_wrap
+maplestory.nexon.com###main_game_info
+maplestory.nexon.com###media_sec
+inven.co.kr##.board-electric-sign
+inven.co.kr##.commu-right
+inven.co.kr##.topbar
+inven.co.kr###iBuilderHeader
+inven.co.kr###powerbbsHead
