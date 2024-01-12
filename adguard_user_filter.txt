@@ -1,6 +1,6 @@
 ﻿! Title: User-Defined for AdGuard
 ! Description: User-Defined for AdGuard.
-! Version: 20240113.05
+! Version: 20240113.051
 ! Expires: 1 day
 ! Homepage: https://github.com/AesirOrb/Adguard
 ! Redirect: https://raw.githubusercontent.com/AesirOrb/Adguard/main/adguard_user_filter.txt
