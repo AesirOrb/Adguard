@@ -1,5 +1,4 @@
-﻿[AdGuard]
-! Title: User-Defined for AdGuard
+﻿! Title: User-Defined for AdGuard
 ! Description: User-Defined for AdGuard.
 ! Version: 2024.0113.0
 ! Expires: 1 day
@@ -8,3 +7,6 @@
 www.naver.com$$div[id="footer"]
 www.naver.com$$div[id="special-logo"]
 www.naver.com$$div[id="search-right-banner"]
+www.naver.com##.Layout-module__column_left___tLO23
+www.naver.com##.Layout-module__content_area___b_3TU:not(#account)
+www.naver.com###widgetboard
