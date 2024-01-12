@@ -1,6 +1,6 @@
 ﻿! Title: User-Defined for AdGuard
 ! Description: User-Defined for AdGuard.
-! Version: 20240113.04
+! Version: 20240113.05
 ! Expires: 1 day
 ! Homepage: https://github.com/AesirOrb/Adguard
 ! Redirect: https://raw.githubusercontent.com/AesirOrb/Adguard/main/adguard_user_filter.txt
@@ -9,10 +9,8 @@ www.naver.com$$div[id="footer"]
 www.naver.com$$div[id="special-logo"]
 www.naver.com$$div[id="search-right-banner"]
 www.naver.com$$div[id="widgetboard"]
-www.naver.com$$div[id="right-content-area"]
-www.naver.com$@$div[id="account"]
-! www.naver.com##.Layout-module__column_left___tLO23
-! www.naver.com##.Layout-module__content_area___b_3TU:not(#account)
+www.naver.com##.Layout-module__column_left___tLO23
+www.naver.com##.Layout-module__content_area___b_3TU:not(#account)
 maplestory.nexon.com##.community_wrap
 maplestory.nexon.com###banner_area
 maplestory.nexon.com###issue_tag
