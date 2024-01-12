@@ -1,8 +1,9 @@
 ﻿! Title: User-Defined for AdGuard
 ! Description: User-Defined for AdGuard.
-! Version: 2024.0113.1
+! Version: 20240113.03
 ! Expires: 1 day
 ! Homepage: https://github.com/AesirOrb/Adguard
+! Redirect: https://raw.githubusercontent.com/AesirOrb/Adguard/main/adguard_user_filter.txt
 
 www.naver.com$$div[id="footer"]
 www.naver.com$$div[id="special-logo"]
