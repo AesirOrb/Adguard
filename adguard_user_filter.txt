@@ -1,6 +1,6 @@
 ﻿! Title: User-Defined for AdGuard
 ! Description: User-Defined for AdGuard.
-! Version: 2024.0113.0
+! Version: 2024.0113.1
 ! Expires: 1 day
 ! Homepage: https://github.com/AesirOrb/Adguard
 
