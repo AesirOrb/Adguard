@@ -1,3 +1,10 @@
-﻿www.naver.com$$div[id="footer"]
+﻿[AdGuard]
+! Title: User-Defined for AdGuard
+! Description: User-Defined for AdGuard.
+! Version: 2024.0113.0
+! Expires: 1 day
+! Homepage: https://github.com/AesirOrb/Adguard
+
+www.naver.com$$div[id="footer"]
 www.naver.com$$div[id="special-logo"]
 www.naver.com$$div[id="search-right-banner"]
