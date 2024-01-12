@@ -1,0 +1,3 @@
+﻿www.naver.com$$div[id="footer"]
+www.naver.com$$div[id="special-logo"]
+www.naver.com$$div[id="search-right-banner"]
