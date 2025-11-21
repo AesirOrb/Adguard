@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         dalimernetTweak
-// @version      2.0.1
+// @version      2.0.2
 // @description  dalimernetTweak
-// @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.js
-// @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.js
+// @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
+// @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
 // @match        *://dlm16.net/*
 // @run-at       document-start
 // ==/UserScript==
@@ -70,3 +70,4 @@
 		}
 	});
 })();
+
