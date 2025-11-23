@@ -1,15 +1,18 @@
 // ==UserScript==
 // @name         dalimernetTweak
-// @version      2.1.0
-// @description  dalimernetTweak
+// @version      2.1.1
+// @description  달리머넷 사이트에서 게시판 항목 정렬, 키보드 단축키, 포인트 내역 스타일 수정, 카테고리 리다이렉트 기능을 추가합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
-// @match        *://dlm16.net/*
+// @match        *://dlm*.net/*
 // @run-at       document-start
 // ==/UserScript==
 
 (() => {
 	'use strict';
+
+	const match = location.hostname.match(/^dlm(\d+)\.net$/);
+	if (!match) return;
 
 	window.addEventListener('load', function () {
 		fixPointHistory();
