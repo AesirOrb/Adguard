@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         dalimernetTweak
-// @version      2.1.1
-// @description  달리머넷 사이트에서 게시판 항목 정렬, 키보드 단축키, 포인트 내역 스타일 수정, 카테고리 리다이렉트 기능을 추가합니다.
+// @name         Dalimernet Assistant
+// @version      2.1.2
+// @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬 기능, 'Q' 단축키로 검색/계속검색 클릭 기능이 추가되고 다크모드에서의 포인트 내역 스타일을 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetTweak.user.js
 // @match        *://dlm*.net/*
@@ -15,14 +15,14 @@
 	if (!match) return;
 
 	window.addEventListener('load', function () {
-		fixPointHistory();
-		addKeydownFunction();
+		addRedirectCategory();
 		addSortFunction();
-		redirectCategory();
+		addKeydownEvent();
+		fixPointHistory();
 	});
 })();
 
-function redirectCategory() {
+function addRedirectCategory() {
 	document.addEventListener('click', function (e) {
 		const a = e.target.closest('a');
 		if (!a) return;
@@ -47,40 +47,6 @@ function redirectCategory() {
 		if (href) {
 			e.preventDefault();
 			this.location.href = url.pathname + href;
-		}
-	});
-}
-
-function fixPointHistory() {
-	const pointhistory = document.querySelector('.pointhistory');
-	if (pointhistory) {
-		const links = pointhistory.getElementsByTagName('a');
-		for (const link of links) {
-			link.style.color = 'hsl(227, 18%, 25%)';
-			link.style.textDecoration = 'underline';
-		}
-	}
-}
-
-function addKeydownFunction() {
-	document.addEventListener('keydown', function (e) {
-		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-
-		const activeDialog = document.querySelector('.app-dialog')?.classList.contains('active');
-
-		if (e.key.toLowerCase() === 'q' && !activeDialog) {
-			const btnShowMoreReview = document.querySelector('#fo_search > a:nth-child(7)');
-			if (btnShowMoreReview) return btnShowMoreReview.click();
-
-			const btnShowMore = document.querySelector('#app-board-search > div.app-dialog-container > div > form > div.tw-flex.tw-justify-end > a');
-			if (btnShowMore) return btnShowMore.click();
-
-			const btnSearch = document.querySelector('#board-list > div:nth-child(2) > div > a');
-			if (btnSearch) {
-				e.preventDefault();
-				btnSearch.click();
-				document.querySelector('.app-input-expand').focus();
-			}
 		}
 	});
 }
@@ -176,5 +142,39 @@ function addSortFunction() {
 	function sortAllBoards(headerType, order) {
 		sortBoard('.board__list', headerType, order);
 		sortBoard('.board__list-m', headerType, order);
+	}
+}
+
+function addKeydownEvent() {
+	document.addEventListener('keydown', function (e) {
+		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+
+		const activeDialog = document.querySelector('.app-dialog')?.classList.contains('active');
+
+		if (e.key.toLowerCase() === 'q' && !activeDialog) {
+			const btnShowMoreReview = document.querySelector('#fo_search > a:nth-child(7)');
+			if (btnShowMoreReview) return btnShowMoreReview.click();
+
+			const btnShowMore = document.querySelector('#app-board-search > div.app-dialog-container > div > form > div.tw-flex.tw-justify-end > a');
+			if (btnShowMore) return btnShowMore.click();
+
+			const btnSearch = document.querySelector('#board-list > div:nth-child(2) > div > a');
+			if (btnSearch) {
+				e.preventDefault();
+				btnSearch.click();
+				document.querySelector('.app-input-expand').focus();
+			}
+		}
+	});
+}
+
+function fixPointHistory() {
+	const pointhistory = document.querySelector('.pointhistory');
+	if (pointhistory) {
+		const links = pointhistory.getElementsByTagName('a');
+		for (const link of links) {
+			link.style.color = 'hsl(227, 18%, 25%)';
+			link.style.textDecoration = 'underline';
+		}
 	}
 }
