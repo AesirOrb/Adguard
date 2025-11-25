@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.1.8
-// @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬 기능, 'Q' 단축키로 검색/계속검색 클릭 기능이 추가되고 다크모드에서의 포인트 내역 스타일을 개선합니다.
+// @version      3.2.0
+// @description  달리머넷에서 브라우저 알림 및 달리머 후기 카테고리 리다이렉트 및 정렬 기능, 'Q' 단축키로 검색/계속검색 클릭 기능이 추가되고 다크모드에서의 포인트 내역 스타일을 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @match        *://dlm16.net/*
@@ -11,11 +11,50 @@
 (() => {
 	'use strict';
 
+	applyNotification();
 	applyRedirectCategory();
 	applySortFeature();
 	applyKeydownEvent();
 	fixPointHistory();
 })();
+
+function applyNotification() {
+	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+		Notification.requestPermission();
+	}
+
+	setInterval(async () => {
+		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
+		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+		const items = [...doc.querySelectorAll('#jq-dropdown-alert ul.nCenterList > li')];
+		const newNotification = [];
+
+		for (const li of items) {
+			const link = li.querySelector('a')?.href || null;
+			const bodyDiv = li.querySelector('div > div:first-child');
+			const timeDiv = li.querySelector('div > .fs-12');
+			if (!bodyDiv || !timeDiv) continue;
+
+			const body = bodyDiv.innerText.trim();
+			const time = timeDiv.innerText.trim();
+			const isRecent = time.includes('초 전') && parseInt(time) <= 30;
+			if (isRecent) newNotification.push({ body, link });
+		}
+
+		if (newNotification.length === 0) return;
+
+		const noti = new Notification(`${items.length}개의 새 알림`, {
+			body: newNotification.map((n) => '- ' + n.body).join('\n'),
+		});
+
+		if (newNotification[0].link) {
+			noti.onclick = () => {
+				window.focus();
+				window.open(newNotification[0].link, '_blank');
+			};
+		}
+	}, 30000);
+}
 
 function applyRedirectCategory() {
 	document.addEventListener('click', function (e) {
