@@ -1,30 +1,23 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.1.2
+// @version      3.1.3
 // @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬 기능, 'Q' 단축키로 검색/계속검색 클릭 기능이 추가되고 다크모드에서의 포인트 내역 스타일을 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @match        *://dlm16.net/*
-// @grant        unsafeWindow
 // @run-at       document-start
 // ==/UserScript==
 
 (() => {
 	'use strict';
 
-	document.addEventListener('DOMContentLoaded', init);
-	window.addEventListener('pageshow', init);
+	document.addEventListener('DOMContentLoaded', () => {
+		addRedirectCategory();
+		addSortFunction();
+		addKeydownEvent();
+		fixPointHistory();
+	});
 })();
-
-function init() {
-	if (window.__initialized__) return;
-	window.__initialized__ = true;
-
-	addRedirectCategory();
-	addSortFunction();
-	addKeydownEvent();
-	fixPointHistory();
-}
 
 function addRedirectCategory() {
 	document.addEventListener('click', function (e) {
