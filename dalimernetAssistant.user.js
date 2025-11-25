@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.2.0
-// @description  달리머넷에서 브라우저 알림 및 달리머 후기 카테고리 리다이렉트 및 정렬 기능, 'Q' 단축키로 검색/계속검색 클릭 기능이 추가되고 다크모드에서의 포인트 내역 스타일을 개선합니다.
+// @version      3.2.1
+// @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬, 'Q' 단축키를 통한 검색 및 계속검색 기능을 추가하고 포인트 내역 스타일을 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @match        *://dlm16.net/*
@@ -11,7 +11,7 @@
 (() => {
 	'use strict';
 
-	applyNotification();
+	//	applyNotification();
 	applyRedirectCategory();
 	applySortFeature();
 	applyKeydownEvent();
@@ -212,3 +212,4 @@ function fixPointHistory() {
 		link.style.textDecoration = 'underline';
 	}
 }
+
