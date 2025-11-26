@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.2.1
+// @version      3.2.2
 // @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬, 'Q' 단축키를 통한 검색 및 계속검색 기능을 추가하고 포인트 내역 스타일을 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -184,21 +184,28 @@ function applyKeydownEvent() {
 		if (e.target instanceof HTMLInputElement) return;
 		if (e.target instanceof HTMLSelectElement) return;
 
-		const activeDialog = document.querySelector('.app-dialog')?.classList.contains('active');
-		if (activeDialog) return;
+		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
+		if (isActiveDialog) return;
 
-		const btnShowMoreReview = document.querySelector('#fo_search > a:nth-child(7)');
-		if (btnShowMoreReview) return btnShowMoreReview.click();
+		const btnReviewShowMore = document.querySelector('#fo_search a');
+		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
 
-		const btnShowMore = document.querySelector('#app-board-search > div.app-dialog-container > div > form > div.tw-flex.tw-justify-end > a');
-		if (btnShowMore) return btnShowMore.click();
+		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
+		if (btnReviewSearch) {
+			e.preventDefault();
+			btnReviewSearch.click();
+			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
+		}
 
-		const btnSearch = document.querySelector('#board-list > div:nth-child(2) > div > a');
-		if (!btnSearch) return;
+		const btnShowMore = document.querySelector('#app-board-search a');
+		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
 
-		e.preventDefault();
-		btnSearch.click();
-		document.querySelector('.app-input-expand').focus();
+		const btnSearch = document.querySelector('#board-list a.app-icon-button');
+		if (btnSearch) {
+			e.preventDefault();
+			btnSearch.click();
+			document.querySelector('#app-board-search input[type=text]').focus();
+		}
 	});
 }
 
@@ -212,4 +219,3 @@ function fixPointHistory() {
 		link.style.textDecoration = 'underline';
 	}
 }
-
