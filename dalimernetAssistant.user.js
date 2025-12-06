@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.2.2
-// @description  달리머넷에서 달리머 후기 카테고리 리다이렉트 및 정렬, 'Q' 단축키를 통한 검색 및 계속검색 기능을 추가하고 포인트 내역 스타일을 개선합니다.
+// @version      3.3.0
+// @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @match        *://dlm16.net/*
@@ -15,6 +15,7 @@
 	applyRedirectCategory();
 	applySortFeature();
 	applyKeydownEvent();
+	applyExpandClickArea();
 	fixPointHistory();
 })();
 
@@ -206,6 +207,20 @@ function applyKeydownEvent() {
 			btnSearch.click();
 			document.querySelector('#app-board-search input[type=text]').focus();
 		}
+	});
+}
+
+function applyExpandClickArea() {
+	document.querySelectorAll('tbody tr').forEach((tr) => {
+		const a = tr.querySelector('td a[href]');
+		const td = tr.querySelector('td.title');
+		if (!a || !td) return;
+
+		td.style.cursor = 'pointer';
+		td.addEventListener('click', (e) => {
+			if (e.target.tagName.toLowerCase() === 'a') return;
+			window.location.href = a.href;
+		});
 	});
 }
 
