@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.3.0
+// @version      3.3.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -11,82 +11,67 @@
 (() => {
 	'use strict';
 
-	//	applyNotification();
+	const isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+	const chkAnonymous = document.querySelector('input#is_anonymous');
+	if (chkAnonymous) chkAnonymous.checked = true;
+
+	applyNotification(isMobile);
+	applySortFeature(isMobile);
+	applyKeydownEvent(isMobile);
+	applyExpandClickArea(isMobile);
 	applyRedirectCategory();
-	applySortFeature();
-	applyKeydownEvent();
-	applyExpandClickArea();
 	fixPointHistory();
 })();
 
-function applyNotification() {
+function applyNotification(isMobile) {
+	if (isMobile) return;
+
 	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
 		Notification.requestPermission();
 	}
 
-	setInterval(async () => {
+	const loadNotifications = async () => {
+		setTimeout(loadNotifications, 1000);
+
+		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
+		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
+		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
+
 		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
 		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-		const items = [...doc.querySelectorAll('#jq-dropdown-alert ul.nCenterList > li')];
-		const newNotification = [];
+		const items = [...doc.querySelectorAll('.app-member-list > li')];
+
+		localStorage.setItem('notificationLastLoaded', Date.now());
 
 		for (const li of items) {
-			const link = li.querySelector('a')?.href || null;
-			const bodyDiv = li.querySelector('div > div:first-child');
-			const timeDiv = li.querySelector('div > .fs-12');
-			if (!bodyDiv || !timeDiv) continue;
+			const date = li.querySelector('div > div:nth-child(2) > span:first-child').innerText;
+			const time = li.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
+			const datetime = `${date} ${time}`;
 
-			const body = bodyDiv.innerText.trim();
-			const time = timeDiv.innerText.trim();
-			const isRecent = time.includes('초 전') && parseInt(time) <= 30;
-			if (isRecent) newNotification.push({ body, link });
-		}
+			const isUnread = li.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
+			if (!isUnread) continue;
 
-		if (newNotification.length === 0) return;
+			const body = li.querySelector('a').innerText;
+			const link = li.querySelector('a').href || null;
+			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
+			if (!id || notificationIDs.includes(id)) continue;
 
-		const noti = new Notification(`${items.length}개의 새 알림`, {
-			body: newNotification.map((n) => '- ' + n.body).join('\n'),
-		});
+			notificationIDs.push(id);
+			if (notificationIDs.length > 10) notificationIDs.slice(-1);
+			localStorage.setItem('notificationIDs', JSON.stringify(notificationIDs));
 
-		if (newNotification[0].link) {
-			noti.onclick = () => {
+			new Notification(datetime, { body: body }).onclick = () => {
 				window.focus();
-				window.open(newNotification[0].link, '_blank');
+				window.open(link, '_blank');
 			};
 		}
-	}, 30000);
+	};
+
+	loadNotifications();
 }
+function applySortFeature(isMobile) {
+	if (isMobile) return;
 
-function applyRedirectCategory() {
-	document.addEventListener('click', function (e) {
-		const link = e.target.closest('a');
-		if (!link) return;
-
-		const url = new URL(link.href, location.origin);
-		if (url.searchParams.size) return;
-
-		switch (url.pathname) {
-			case '/board_SjQX31':
-				var href = '/category/458';
-				break;
-
-			case '/board_coJF70':
-				var href = '/category/493';
-				break;
-
-			case '/board_bJKb47':
-				var href = '/category/510';
-				break;
-		}
-
-		if (href) {
-			e.preventDefault();
-			location.href = url.pathname + href;
-		}
-	});
-}
-
-function applySortFeature() {
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
 	const headerRow = document.querySelector('.item-list-header');
 	const headers = headerRow?.querySelectorAll('.item__inner');
@@ -179,7 +164,9 @@ function applySortFeature() {
 	}
 }
 
-function applyKeydownEvent() {
+function applyKeydownEvent(isMobile) {
+	if (isMobile) return;
+
 	document.addEventListener('keydown', function (e) {
 		if (e.key.toLowerCase() !== 'q') return;
 		if (e.target instanceof HTMLInputElement) return;
@@ -210,7 +197,9 @@ function applyKeydownEvent() {
 	});
 }
 
-function applyExpandClickArea() {
+function applyExpandClickArea(isMobile) {
+	if (isMobile) return;
+
 	document.querySelectorAll('tbody tr').forEach((tr) => {
 		const a = tr.querySelector('td a[href]');
 		const td = tr.querySelector('td.title');
@@ -221,6 +210,35 @@ function applyExpandClickArea() {
 			if (e.target.tagName.toLowerCase() === 'a') return;
 			window.location.href = a.href;
 		});
+	});
+}
+
+function applyRedirectCategory() {
+	document.addEventListener('click', function (e) {
+		const link = e.target.closest('a');
+		if (!link) return;
+
+		const url = new URL(link.href, location.origin);
+		if (url.searchParams.size) return;
+
+		switch (url.pathname) {
+			case '/board_SjQX31':
+				var href = '/category/458';
+				break;
+
+			case '/board_coJF70':
+				var href = '/category/493';
+				break;
+
+			case '/board_bJKb47':
+				var href = '/category/510';
+				break;
+		}
+
+		if (href) {
+			e.preventDefault();
+			location.href = url.pathname + href;
+		}
 	});
 }
 
