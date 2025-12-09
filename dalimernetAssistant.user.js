@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.4.0
+// @version      3.4.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -11,38 +11,33 @@
 (() => {
 	'use strict';
 
-	//applyNotification();
-	applySortFeature();
-	applyKeydownEvent();
-	applyExpandClickArea();
 	applyCheckAnonymous();
 	applyRedirectCategory();
 	fixPointHistory();
+
+	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
+
+	applyNotification();
+	applySortFeature();
+	applyKeydownEvent();
+	applyExpandClickArea();
 })();
 
-function isMobile() {
-	return /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
-}
-
 function applyNotification() {
-	if (isMobile()) return;
-
 	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
 		Notification.requestPermission();
 	}
 
 	const loadNotifications = async () => {
-		setTimeout(loadNotifications, 1000);
-
 		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
 		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
 		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
 
+		localStorage.setItem('notificationLastLoaded', Date.now());
+
 		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
 		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
 		const items = [...doc.querySelectorAll('.app-member-list > li')];
-
-		localStorage.setItem('notificationLastLoaded', Date.now());
 
 		for (const li of items) {
 			const date = li.querySelector('div > div:nth-child(2) > span:first-child').innerText;
@@ -57,9 +52,8 @@ function applyNotification() {
 			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
 			if (!id || notificationIDs.includes(id)) continue;
 
-			notificationIDs.push(id);
-			if (notificationIDs.length > 10) notificationIDs.slice(-1);
-			localStorage.setItem('notificationIDs', JSON.stringify(notificationIDs));
+			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
+			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
 
 			new Notification(datetime, { body: body }).onclick = () => {
 				window.focus();
@@ -68,12 +62,12 @@ function applyNotification() {
 		}
 	};
 
+	setInterval(loadNotifications, 1000);
+
 	loadNotifications();
 }
 
 function applySortFeature() {
-	if (isMobile()) return;
-
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
 	const headerRow = document.querySelector('.item-list-header');
 	const headers = headerRow?.querySelectorAll('.item__inner');
@@ -167,12 +161,23 @@ function applySortFeature() {
 }
 
 function applyKeydownEvent() {
-	if (isMobile()) return;
-
 	document.addEventListener('keydown', function (e) {
+		if (e.key.toLowerCase() === 'escape') {
+			const btnClose = document.querySelector('.app-dialog-close');
+			if (btnClose) return btnClose.click();
+		}
+
+		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+
+		if (e.key.toLowerCase() === 'r') {
+			const pathname = location.pathname.match(/^(\/[^\/]+)/)?.[1];
+			if (pathname) {
+				location.href = location.origin + pathname;
+				return;
+			}
+		}
+
 		if (e.key.toLowerCase() !== 'q') return;
-		if (e.target instanceof HTMLInputElement) return;
-		if (e.target instanceof HTMLSelectElement) return;
 
 		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
 		if (isActiveDialog) return;
@@ -200,8 +205,6 @@ function applyKeydownEvent() {
 }
 
 function applyExpandClickArea() {
-	if (isMobile()) return;
-
 	document.querySelectorAll('tbody tr').forEach((tr) => {
 		const a = tr.querySelector('td a[href]');
 		const td = tr.querySelector('td.title');
@@ -209,7 +212,7 @@ function applyExpandClickArea() {
 
 		td.style.cursor = 'pointer';
 		td.addEventListener('click', (e) => {
-			if (e.target.tagName.toLowerCase() === 'a') return;
+			if (e.target.closest('a')) return;
 			window.location.href = a.href;
 		});
 	});
@@ -241,20 +244,13 @@ function applyRedirectCategory() {
 		const url = new URL(link.href, location.origin);
 		if (url.searchParams.size) return;
 
-		switch (url.pathname) {
-			case '/board_SjQX31':
-				var href = '/category/458';
-				break;
+		const boardMap = {
+			'/board_SjQX31': '/category/458',
+			'/board_coJF70': '/category/493',
+			'/board_bJKb47': '/category/510',
+		};
 
-			case '/board_coJF70':
-				var href = '/category/493';
-				break;
-
-			case '/board_bJKb47':
-				var href = '/category/510';
-				break;
-		}
-
+		const href = boardMap[url.pathname];
 		if (href) {
 			e.preventDefault();
 			location.href = url.pathname + href;
