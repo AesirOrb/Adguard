@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.3.1
+// @version      3.4.0
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -11,20 +11,21 @@
 (() => {
 	'use strict';
 
-	const isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
-	const chkAnonymous = document.querySelector('input#is_anonymous');
-	if (chkAnonymous) chkAnonymous.checked = true;
-
-	applyNotification(isMobile);
-	applySortFeature(isMobile);
-	applyKeydownEvent(isMobile);
-	applyExpandClickArea(isMobile);
+	//applyNotification();
+	applySortFeature();
+	applyKeydownEvent();
+	applyExpandClickArea();
+	applyCheckAnonymous();
 	applyRedirectCategory();
 	fixPointHistory();
 })();
 
-function applyNotification(isMobile) {
-	if (isMobile) return;
+function isMobile() {
+	return /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+}
+
+function applyNotification() {
+	if (isMobile()) return;
 
 	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
 		Notification.requestPermission();
@@ -69,8 +70,9 @@ function applyNotification(isMobile) {
 
 	loadNotifications();
 }
-function applySortFeature(isMobile) {
-	if (isMobile) return;
+
+function applySortFeature() {
+	if (isMobile()) return;
 
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
 	const headerRow = document.querySelector('.item-list-header');
@@ -164,8 +166,8 @@ function applySortFeature(isMobile) {
 	}
 }
 
-function applyKeydownEvent(isMobile) {
-	if (isMobile) return;
+function applyKeydownEvent() {
+	if (isMobile()) return;
 
 	document.addEventListener('keydown', function (e) {
 		if (e.key.toLowerCase() !== 'q') return;
@@ -197,8 +199,8 @@ function applyKeydownEvent(isMobile) {
 	});
 }
 
-function applyExpandClickArea(isMobile) {
-	if (isMobile) return;
+function applyExpandClickArea() {
+	if (isMobile()) return;
 
 	document.querySelectorAll('tbody tr').forEach((tr) => {
 		const a = tr.querySelector('td a[href]');
@@ -211,6 +213,24 @@ function applyExpandClickArea(isMobile) {
 			window.location.href = a.href;
 		});
 	});
+}
+
+function applyCheckAnonymous() {
+	const checkAnonymous = (inputName) => {
+		const inputAnonymous = document.querySelector(inputName);
+		if (inputAnonymous) inputAnonymous.checked = true;
+	};
+
+	checkAnonymous('input#is_anonymous');
+
+	const div = document.querySelector('#app-board-comment-list');
+	if (!div) return;
+
+	const observer = new MutationObserver(() => {
+		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
+	});
+
+	observer.observe(div, { childList: true, subtree: true });
 }
 
 function applyRedirectCategory() {
@@ -246,9 +266,12 @@ function fixPointHistory() {
 	const pointhistory = document.querySelector('.pointhistory');
 	if (!pointhistory) return;
 
-	const links = pointhistory.getElementsByTagName('a');
-	for (const link of links) {
+	for (const link of pointhistory.getElementsByTagName('a')) {
 		link.style.color = 'hsl(227, 18%, 25%)';
 		link.style.textDecoration = 'underline';
+	}
+
+	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
+		link.style.color = 'hsl(227, 18%,25%)';
 	}
 }
