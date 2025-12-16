@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.5.0
+// @version      3.5.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -70,7 +70,12 @@ function applyReviewStyle() {
 
 	for (const link of links) {
 		if (link.dataset?.alert) continue;
-		link.style.setProperty('color', '#E5B244', 'important');
+
+		if (link.textContent === '') {
+			link.parentElement.querySelector('a.subject').style.setProperty('color', '#E5B244', 'important');
+		} else {
+			link.style.setProperty('color', '#E5B244', 'important');
+		}
 	}
 
 	document.addEventListener(
