@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.4.1
+// @version      3.5.0
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -12,16 +12,138 @@
 	'use strict';
 
 	applyCheckAnonymous();
-	applyRedirectCategory();
+	applyReviewCategory();
+	applyReviewStyle();
 	fixPointHistory();
 
 	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
 
-	applyNotification();
-	applySortFeature();
 	applyKeydownEvent();
+	applyNotification();
+	applyReviewSorting();
 	applyExpandClickArea();
 })();
+
+function applyCheckAnonymous() {
+	const checkAnonymous = (inputName) => {
+		const inputAnonymous = document.querySelector(inputName);
+		if (inputAnonymous) inputAnonymous.checked = true;
+	};
+
+	checkAnonymous('input#is_anonymous');
+
+	const div = document.querySelector('#app-board-comment-list');
+	if (!div) return;
+
+	const observer = new MutationObserver(() => {
+		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
+	});
+
+	observer.observe(div, { childList: true, subtree: true });
+}
+
+function applyReviewCategory() {
+	document.addEventListener('click', function (e) {
+		const link = e.target.closest('a');
+		if (!link) return;
+
+		const url = new URL(link.href, location.origin);
+		if (url.searchParams.size) return;
+
+		const boardMap = {
+			'/board_SjQX31': '/category/458',
+			'/board_coJF70': '/category/493',
+			'/board_bJKb47': '/category/510',
+		};
+
+		const href = boardMap[url.pathname];
+		if (href) {
+			e.preventDefault();
+			location.href = url.pathname + href;
+		}
+	});
+}
+
+function applyReviewStyle() {
+	const links = document.querySelectorAll('.reviewOpen');
+	if (!links) return;
+
+	for (const link of links) {
+		if (link.dataset?.alert) continue;
+		link.style.setProperty('color', '#E5B244', 'important');
+	}
+
+	document.addEventListener(
+		'click',
+		(e) => {
+			const a = e.target.closest('.reviewOpen');
+			if (!a) return;
+
+			e.preventDefault();
+			e.stopImmediatePropagation();
+			location.href = a.dataset.link;
+		},
+		true
+	);
+}
+
+function fixPointHistory() {
+	const pointhistory = document.querySelector('.pointhistory');
+	if (!pointhistory) return;
+
+	for (const link of pointhistory.getElementsByTagName('a')) {
+		link.style.color = 'hsl(227, 18%, 25%)';
+		link.style.textDecoration = 'underline';
+	}
+
+	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
+		link.style.color = 'hsl(227, 18%,25%)';
+	}
+}
+
+function applyKeydownEvent() {
+	document.addEventListener('keydown', function (e) {
+		if (e.key.toLowerCase() === 'escape') {
+			const btnClose = document.querySelector('.app-dialog-close');
+			if (btnClose) return btnClose.click();
+		}
+
+		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+
+		if (e.key.toLowerCase() === 'r') {
+			const pathname = location.pathname.match(/^(\/[^\/]+)/)?.[1];
+			if (pathname) {
+				location.href = location.origin + pathname;
+				return;
+			}
+		}
+
+		if (e.key.toLowerCase() !== 'q') return;
+
+		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
+		if (isActiveDialog) return;
+
+		const btnReviewShowMore = document.querySelector('#fo_search a');
+		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
+
+		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
+		if (btnReviewSearch) {
+			e.preventDefault();
+			btnReviewSearch.click();
+			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
+		}
+
+		const btnShowMore = document.querySelector('#app-board-search a');
+		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
+
+		const btnSearch = document.querySelector('#board-list a.app-icon-button');
+		if (btnSearch) {
+			e.preventDefault();
+			btnSearch.click();
+			document.querySelector('#app-board-search input[type=text]').focus();
+		}
+	});
+}
 
 function applyNotification() {
 	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -67,7 +189,7 @@ function applyNotification() {
 	loadNotifications();
 }
 
-function applySortFeature() {
+function applyReviewSorting() {
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
 	const headerRow = document.querySelector('.item-list-header');
 	const headers = headerRow?.querySelectorAll('.item__inner');
@@ -160,50 +282,6 @@ function applySortFeature() {
 	}
 }
 
-function applyKeydownEvent() {
-	document.addEventListener('keydown', function (e) {
-		if (e.key.toLowerCase() === 'escape') {
-			const btnClose = document.querySelector('.app-dialog-close');
-			if (btnClose) return btnClose.click();
-		}
-
-		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-
-		if (e.key.toLowerCase() === 'r') {
-			const pathname = location.pathname.match(/^(\/[^\/]+)/)?.[1];
-			if (pathname) {
-				location.href = location.origin + pathname;
-				return;
-			}
-		}
-
-		if (e.key.toLowerCase() !== 'q') return;
-
-		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
-		if (isActiveDialog) return;
-
-		const btnReviewShowMore = document.querySelector('#fo_search a');
-		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
-
-		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
-		if (btnReviewSearch) {
-			e.preventDefault();
-			btnReviewSearch.click();
-			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
-		}
-
-		const btnShowMore = document.querySelector('#app-board-search a');
-		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
-
-		const btnSearch = document.querySelector('#board-list a.app-icon-button');
-		if (btnSearch) {
-			e.preventDefault();
-			btnSearch.click();
-			document.querySelector('#app-board-search input[type=text]').focus();
-		}
-	});
-}
-
 function applyExpandClickArea() {
 	document.querySelectorAll('tbody tr').forEach((tr) => {
 		const a = tr.querySelector('td a[href]');
@@ -216,58 +294,4 @@ function applyExpandClickArea() {
 			window.location.href = a.href;
 		});
 	});
-}
-
-function applyCheckAnonymous() {
-	const checkAnonymous = (inputName) => {
-		const inputAnonymous = document.querySelector(inputName);
-		if (inputAnonymous) inputAnonymous.checked = true;
-	};
-
-	checkAnonymous('input#is_anonymous');
-
-	const div = document.querySelector('#app-board-comment-list');
-	if (!div) return;
-
-	const observer = new MutationObserver(() => {
-		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
-	});
-
-	observer.observe(div, { childList: true, subtree: true });
-}
-
-function applyRedirectCategory() {
-	document.addEventListener('click', function (e) {
-		const link = e.target.closest('a');
-		if (!link) return;
-
-		const url = new URL(link.href, location.origin);
-		if (url.searchParams.size) return;
-
-		const boardMap = {
-			'/board_SjQX31': '/category/458',
-			'/board_coJF70': '/category/493',
-			'/board_bJKb47': '/category/510',
-		};
-
-		const href = boardMap[url.pathname];
-		if (href) {
-			e.preventDefault();
-			location.href = url.pathname + href;
-		}
-	});
-}
-
-function fixPointHistory() {
-	const pointhistory = document.querySelector('.pointhistory');
-	if (!pointhistory) return;
-
-	for (const link of pointhistory.getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%, 25%)';
-		link.style.textDecoration = 'underline';
-	}
-
-	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%,25%)';
-	}
 }
