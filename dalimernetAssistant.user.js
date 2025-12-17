@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.5.5
+// @version      3.5.6
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -293,13 +293,7 @@ function applyNotification() {
 			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
 			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
 
-			new Notification(datetime, { body: body }).onclick = () => {
-				try {
-					location.href = link;
-				} catch {
-					window.open(link, '_blank');
-				}
-			};
+			new Notification(datetime, { body: body }).onclick = () => window.open(link, '_blank');
 		}
 	};
 
