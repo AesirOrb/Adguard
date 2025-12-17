@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.5.3
+// @version      3.5.4
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -11,38 +11,31 @@
 (() => {
 	'use strict';
 
-	applyBoardStyle();
+	fixPointHistory();
 	applyReviewStyle();
 	applyReviewCategory();
 	applyCheckAnonymous();
-	fixPointHistory();
 
 	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
 
+	applyBoardStyle();
 	applyKeydownEvent();
-	applyNotification();
 	applyReviewSorting();
+	applyNotification();
 })();
 
-function applyBoardStyle() {
-	document.querySelectorAll('table.app-board-template-table > tbody > tr').forEach((tr) => {
-		const td = tr.querySelector('td.title');
-		if (!td) return;
+function fixPointHistory() {
+	const pointhistory = document.querySelector('.pointhistory');
+	if (!pointhistory) return;
 
-		const a = td.querySelector('a[href]');
-		if (!a) return;
+	for (const link of pointhistory.getElementsByTagName('a')) {
+		link.style.color = 'hsl(227, 18%, 25%)';
+		link.style.textDecoration = 'underline';
+	}
 
-		td.style.cursor = 'pointer';
-		td.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			location.href = a.href;
-		});
-
-		const img = tr.querySelector('td.author img');
-		if (img?.alt && (img.alt == '여성회원' || img.alt == '여성회원A' || img.alt == '인증회원')) {
-			a.style.setProperty('color', '#fcc3db', 'important');
-		}
-	});
+	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
+		link.style.color = 'hsl(227, 18%,25%)';
+	}
 }
 
 function applyReviewStyle() {
@@ -113,18 +106,25 @@ function applyCheckAnonymous() {
 	observer.observe(div, { childList: true, subtree: true });
 }
 
-function fixPointHistory() {
-	const pointhistory = document.querySelector('.pointhistory');
-	if (!pointhistory) return;
+function applyBoardStyle() {
+	document.querySelectorAll('table.app-board-template-table > tbody > tr').forEach((tr) => {
+		const td = tr.querySelector('td.title');
+		if (!td) return;
 
-	for (const link of pointhistory.getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%, 25%)';
-		link.style.textDecoration = 'underline';
-	}
+		const a = td.querySelector('a[href]');
+		if (!a) return;
 
-	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%,25%)';
-	}
+		td.style.cursor = 'pointer';
+		td.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			location.href = a.href;
+		});
+
+		const img = tr.querySelector('td.author img');
+		if (img?.alt && (img.alt == '여성회원' || img.alt == '여성회원A' || img.alt == '인증회원')) {
+			a.style.setProperty('color', '#fcc3db', 'important');
+		}
+	});
 }
 
 function applyKeydownEvent() {
@@ -169,53 +169,6 @@ function applyKeydownEvent() {
 			document.querySelector('#app-board-search input[type=text]').focus();
 		}
 	});
-}
-
-function applyNotification() {
-	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-		Notification.requestPermission();
-	}
-
-	const loadNotifications = async () => {
-		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
-		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
-		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
-
-		localStorage.setItem('notificationLastLoaded', Date.now());
-
-		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
-		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-		const items = [...doc.querySelectorAll('.app-member-list > li')];
-
-		for (const li of items) {
-			const date = li.querySelector('div > div:nth-child(2) > span:first-child').innerText;
-			const time = li.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
-			const datetime = `${date} ${time}`;
-
-			const isUnread = li.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
-			if (!isUnread) continue;
-
-			const body = li.querySelector('a').innerText;
-			const link = li.querySelector('a').href || null;
-			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
-			if (!id || notificationIDs.includes(id)) continue;
-
-			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
-			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
-
-			new Notification(datetime, { body: body }).onclick = () => {
-				try {
-					location.href = link;
-				} catch {
-					window.open(link, '_blank');
-				}
-			};
-		}
-	};
-
-	setInterval(loadNotifications, 1000);
-
-	loadNotifications();
 }
 
 function applyReviewSorting() {
@@ -309,4 +262,51 @@ function applyReviewSorting() {
 		sortBoard('.board__list', headerType, order);
 		sortBoard('.board__list-m', headerType, order);
 	}
+}
+
+function applyNotification() {
+	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+		Notification.requestPermission();
+	}
+
+	const loadNotifications = async () => {
+		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
+		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
+		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
+
+		localStorage.setItem('notificationLastLoaded', Date.now());
+
+		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
+		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+		const items = [...doc.querySelectorAll('.app-member-list > li')];
+
+		for (const li of items) {
+			const date = li.querySelector('div > div:nth-child(2) > span:first-child').innerText;
+			const time = li.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
+			const datetime = `${date} ${time}`;
+
+			const isUnread = li.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
+			if (!isUnread) continue;
+
+			const body = li.querySelector('a').innerText;
+			const link = li.querySelector('a').href || null;
+			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
+			if (!id || notificationIDs.includes(id)) continue;
+
+			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
+			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
+
+			new Notification(datetime, { body: body }).onclick = () => {
+				try {
+					location.href = link;
+				} catch {
+					window.open(link, '_blank');
+				}
+			};
+		}
+	};
+
+	setInterval(loadNotifications, 1000);
+
+	loadNotifications();
 }
