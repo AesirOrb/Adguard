@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.5.2
+// @version      3.5.3
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -11,9 +11,10 @@
 (() => {
 	'use strict';
 
-	applyCheckAnonymous();
-	applyReviewCategory();
+	applyBoardStyle();
 	applyReviewStyle();
+	applyReviewCategory();
+	applyCheckAnonymous();
 	fixPointHistory();
 
 	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
@@ -21,45 +22,25 @@
 	applyKeydownEvent();
 	applyNotification();
 	applyReviewSorting();
-	applyExpandClickArea();
 })();
 
-function applyCheckAnonymous() {
-	const checkAnonymous = (inputName) => {
-		const inputAnonymous = document.querySelector(inputName);
-		if (inputAnonymous) inputAnonymous.checked = true;
-	};
+function applyBoardStyle() {
+	document.querySelectorAll('table.app-board-template-table > tbody > tr').forEach((tr) => {
+		const td = tr.querySelector('td.title');
+		if (!td) return;
 
-	checkAnonymous('input#is_anonymous');
+		const a = td.querySelector('a[href]');
+		if (!a) return;
 
-	const div = document.querySelector('#app-board-comment-list');
-	if (!div) return;
+		td.style.cursor = 'pointer';
+		td.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			location.href = a.href;
+		});
 
-	const observer = new MutationObserver(() => {
-		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
-	});
-
-	observer.observe(div, { childList: true, subtree: true });
-}
-
-function applyReviewCategory() {
-	document.addEventListener('click', function (e) {
-		const link = e.target.closest('a');
-		if (!link) return;
-
-		const url = new URL(link.href, location.origin);
-		if (url.searchParams.size) return;
-
-		const boardMap = {
-			'/board_SjQX31': '/category/458',
-			'/board_coJF70': '/category/493',
-			'/board_bJKb47': '/category/510',
-		};
-
-		const href = boardMap[url.pathname];
-		if (href) {
-			e.preventDefault();
-			location.href = url.pathname + href;
+		const img = tr.querySelector('td.author img');
+		if (img?.alt && (img.alt == '여성회원' || img.alt == '여성회원A' || img.alt == '인증회원')) {
+			a.style.setProperty('color', '#fcc3db', 'important');
 		}
 	});
 }
@@ -90,6 +71,46 @@ function applyReviewStyle() {
 		},
 		true
 	);
+}
+
+function applyReviewCategory() {
+	document.addEventListener('click', function (e) {
+		const link = e.target.closest('a');
+		if (!link) return;
+
+		const url = new URL(link.href, location.origin);
+		if (url.searchParams.size) return;
+
+		const boardMap = {
+			'/board_SjQX31': '/category/458',
+			'/board_coJF70': '/category/493',
+			'/board_bJKb47': '/category/510',
+		};
+
+		const href = boardMap[url.pathname];
+		if (href) {
+			e.preventDefault();
+			location.href = url.pathname + href;
+		}
+	});
+}
+
+function applyCheckAnonymous() {
+	const checkAnonymous = (inputName) => {
+		const inputAnonymous = document.querySelector(inputName);
+		if (inputAnonymous) inputAnonymous.checked = true;
+	};
+
+	checkAnonymous('input#is_anonymous');
+
+	const div = document.querySelector('#app-board-comment-list');
+	if (!div) return;
+
+	const observer = new MutationObserver(() => {
+		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
+	});
+
+	observer.observe(div, { childList: true, subtree: true });
 }
 
 function fixPointHistory() {
@@ -288,18 +309,4 @@ function applyReviewSorting() {
 		sortBoard('.board__list', headerType, order);
 		sortBoard('.board__list-m', headerType, order);
 	}
-}
-
-function applyExpandClickArea() {
-	document.querySelectorAll('tbody tr').forEach((tr) => {
-		const a = tr.querySelector('td a[href]');
-		const td = tr.querySelector('td.title');
-		if (!a || !td) return;
-
-		td.style.cursor = 'pointer';
-		td.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			window.location.href = a.href;
-		});
-	});
 }
