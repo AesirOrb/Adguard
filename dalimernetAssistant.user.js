@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.5.6
+// @version      3.6.0
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -20,6 +20,7 @@
 
 	applyBoardStyle();
 	applyKeydownEvent();
+	applyReviewSearchByClick();
 	applyReviewSorting();
 	applyNotification();
 })();
@@ -166,6 +167,45 @@ function applyKeydownEvent() {
 			document.querySelector('#app-board-search input[type=text]').focus();
 		}
 	});
+}
+
+function applyReviewSearchByClick() {
+	const users = document.querySelector('.board__list')?.querySelectorAll('.item-list .item__inner.item__user');
+	if (!users) return;
+
+	for (const user of users) {
+		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+		if (!textNode) continue;
+
+		const username = textNode.textContent.trim();
+
+		const span = document.createElement('span');
+		span.className = 'username-clickable';
+		span.style.cursor = 'pointer';
+		span.textContent = username;
+
+		span.addEventListener('mouseenter', () => {
+			span.style.textDecoration = 'underline';
+		});
+
+		span.addEventListener('mouseleave', () => {
+			span.style.textDecoration = '';
+		});
+
+		span.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const form = document.querySelector('[rel="js-board-search"]');
+			form.querySelector('select[name=search_target]').value = 'nick_name';
+			form.querySelector('input[type=text]').value = username;
+			form.querySelector('button[type=submit]').click();
+		});
+
+		user.replaceChild(span, textNode);
+
+		user.style.cursor = 'default';
+	}
 }
 
 function applyReviewSorting() {
