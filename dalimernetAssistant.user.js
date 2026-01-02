@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.6.0
+// @version      3.6.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -12,17 +12,17 @@
 	'use strict';
 
 	fixPointHistory();
+	applyCheckAnonymous();
 	applyReviewStyle();
 	applyReviewCategory();
-	applyCheckAnonymous();
 
 	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
 
 	applyBoardStyle();
-	applyKeydownEvent();
-	applyReviewSearchByClick();
 	applyReviewSorting();
-	applyNotification();
+	applySearchByReviewer();
+	applyKeydownEvent();
+	// applyNotification();
 })();
 
 function fixPointHistory() {
@@ -37,6 +37,24 @@ function fixPointHistory() {
 	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
 		link.style.color = 'hsl(227, 18%,25%)';
 	}
+}
+
+function applyCheckAnonymous() {
+	const checkAnonymous = (inputName) => {
+		const inputAnonymous = document.querySelector(inputName);
+		if (inputAnonymous) inputAnonymous.checked = true;
+	};
+
+	checkAnonymous('input#is_anonymous');
+
+	const div = document.querySelector('#app-board-comment-list');
+	if (!div) return;
+
+	const observer = new MutationObserver(() => {
+		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
+	});
+
+	observer.observe(div, { childList: true, subtree: true });
 }
 
 function applyReviewStyle() {
@@ -86,24 +104,6 @@ function applyReviewCategory() {
 	});
 }
 
-function applyCheckAnonymous() {
-	const checkAnonymous = (inputName) => {
-		const inputAnonymous = document.querySelector(inputName);
-		if (inputAnonymous) inputAnonymous.checked = true;
-	};
-
-	checkAnonymous('input#is_anonymous');
-
-	const div = document.querySelector('#app-board-comment-list');
-	if (!div) return;
-
-	const observer = new MutationObserver(() => {
-		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
-	});
-
-	observer.observe(div, { childList: true, subtree: true });
-}
-
 function applyBoardStyle() {
 	document.querySelectorAll('table.app-board-template-table > tbody > tr').forEach((tr) => {
 		const td = tr.querySelector('td.title');
@@ -123,89 +123,6 @@ function applyBoardStyle() {
 			a.style.setProperty('color', '#fcc3db', 'important');
 		}
 	});
-}
-
-function applyKeydownEvent() {
-	document.addEventListener('keydown', function (e) {
-		if (e.key.toLowerCase() === 'escape') {
-			const btnClose = document.querySelector('.app-dialog-close');
-			if (btnClose) return btnClose.click();
-		}
-
-		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-
-		if (e.key.toLowerCase() === 'r') {
-			const pathname = location.pathname.match(/^(\/[^\/]+)/)?.[1];
-			if (pathname) {
-				location.href = location.origin + pathname;
-				return;
-			}
-		}
-
-		if (e.key.toLowerCase() !== 'q') return;
-
-		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
-		if (isActiveDialog) return;
-
-		const btnReviewShowMore = document.querySelector('#fo_search a');
-		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
-
-		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
-		if (btnReviewSearch) {
-			e.preventDefault();
-			btnReviewSearch.click();
-			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
-		}
-
-		const btnShowMore = document.querySelector('#app-board-search a');
-		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
-
-		const btnSearch = document.querySelector('#board-list a.app-icon-button');
-		if (btnSearch) {
-			e.preventDefault();
-			btnSearch.click();
-			document.querySelector('#app-board-search input[type=text]').focus();
-		}
-	});
-}
-
-function applyReviewSearchByClick() {
-	const users = document.querySelector('.board__list')?.querySelectorAll('.item-list .item__inner.item__user');
-	if (!users) return;
-
-	for (const user of users) {
-		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-		if (!textNode) continue;
-
-		const username = textNode.textContent.trim();
-
-		const span = document.createElement('span');
-		span.className = 'username-clickable';
-		span.style.cursor = 'pointer';
-		span.textContent = username;
-
-		span.addEventListener('mouseenter', () => {
-			span.style.textDecoration = 'underline';
-		});
-
-		span.addEventListener('mouseleave', () => {
-			span.style.textDecoration = '';
-		});
-
-		span.addEventListener('click', (e) => {
-			e.preventDefault();
-			e.stopPropagation();
-
-			const form = document.querySelector('[rel="js-board-search"]');
-			form.querySelector('select[name=search_target]').value = 'nick_name';
-			form.querySelector('input[type=text]').value = username;
-			form.querySelector('button[type=submit]').click();
-		});
-
-		user.replaceChild(span, textNode);
-
-		user.style.cursor = 'default';
-	}
 }
 
 function applyReviewSorting() {
@@ -299,6 +216,89 @@ function applyReviewSorting() {
 		sortBoard('.board__list', headerType, order);
 		sortBoard('.board__list-m', headerType, order);
 	}
+}
+
+function applySearchByReviewer() {
+	const users = document.querySelector('.board__list')?.querySelectorAll('.item-list .item__inner.item__user');
+	if (!users) return;
+
+	for (const user of users) {
+		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+		if (!textNode) continue;
+
+		const username = textNode.textContent.trim();
+
+		const span = document.createElement('span');
+		span.className = 'username-clickable';
+		span.style.cursor = 'pointer';
+		span.textContent = username;
+
+		span.addEventListener('mouseenter', () => {
+			span.style.textDecoration = 'underline';
+		});
+
+		span.addEventListener('mouseleave', () => {
+			span.style.textDecoration = '';
+		});
+
+		span.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const form = document.querySelector('[rel="js-board-search"]');
+			form.querySelector('select[name=search_target]').value = 'nick_name';
+			form.querySelector('input[type=text]').value = username;
+			form.querySelector('#fo_search').submit();
+		});
+
+		user.replaceChild(span, textNode);
+
+		user.style.cursor = 'default';
+	}
+}
+
+function applyKeydownEvent() {
+	document.addEventListener('keydown', function (e) {
+		if (e.key.toLowerCase() === 'escape') {
+			const btnClose = document.querySelector('.app-dialog-close');
+			if (btnClose) return btnClose.click();
+		}
+
+		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+
+		if (e.key.toLowerCase() === 'r') {
+			const pathname = location.pathname.match(/^(\/[^\/]+)/)?.[1];
+			if (pathname) {
+				location.href = location.origin + pathname;
+				return;
+			}
+		}
+
+		if (e.key.toLowerCase() !== 'q') return;
+
+		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
+		if (isActiveDialog) return;
+
+		const btnReviewShowMore = document.querySelector('#fo_search a');
+		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
+
+		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
+		if (btnReviewSearch) {
+			e.preventDefault();
+			btnReviewSearch.click();
+			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
+		}
+
+		const btnShowMore = document.querySelector('#app-board-search a');
+		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
+
+		const btnSearch = document.querySelector('#board-list a.app-icon-button');
+		if (btnSearch) {
+			e.preventDefault();
+			btnSearch.click();
+			document.querySelector('#app-board-search input[type=text]').focus();
+		}
+	});
 }
 
 function applyNotification() {
