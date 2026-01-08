@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.6.1
+// @version      3.6.2
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -22,7 +22,7 @@
 	applyReviewSorting();
 	applySearchByReviewer();
 	applyKeydownEvent();
-	// applyNotification();
+	applyNotification();
 })();
 
 function fixPointHistory() {
@@ -59,10 +59,10 @@ function applyCheckAnonymous() {
 
 function applyReviewStyle() {
 	const links = document.querySelectorAll('.reviewOpen');
-	if (!links) return;
+	if (!links || location.pathname === '/board_fsDQ08') return;
 
 	for (let link of links) {
-		if (link.dataset?.alert) continue;
+		if (link.dataset?.alert === '열람시 10p가 차감됩니다.') continue;
 		if (link.textContent === '') link = link.parentElement.querySelector('a.subject');
 
 		link.style.setProperty('color', '#8488eb', 'important');
@@ -333,11 +333,9 @@ function applyNotification() {
 			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
 			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
 
-			new Notification(datetime, { body: body }).onclick = () => window.open(link, '_blank');
+			new Notification(datetime, { body: body }).onclick = () => window.open(link);
 		}
 	};
 
 	setInterval(loadNotifications, 1000);
-
-	loadNotifications();
 }
