@@ -1,12 +1,16 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.6.2
+// @version      3.6.3
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @match        *://dlm16.net/*
 // @run-at       document-end
 // ==/UserScript==
+
+const isDarkMode = /color_scheme_dark/i.test(document.body.className);
+const isMobile =
+	/Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.matchMedia('(pointer: coarse)').matches);
 
 (() => {
 	'use strict';
@@ -16,7 +20,7 @@
 	applyReviewStyle();
 	applyReviewCategory();
 
-	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) return;
+	if (isMobile) return;
 
 	applyBoardStyle();
 	applyReviewSorting();
@@ -26,46 +30,52 @@
 })();
 
 function fixPointHistory() {
-	const pointhistory = document.querySelector('.pointhistory');
+	if (!isDarkMode) return;
+
+	const pointhistory = document.querySelector('table.pointhistory');
 	if (!pointhistory) return;
+
+	pointhistory.caption.style.color = '#D4D6E1';
 
 	for (const link of pointhistory.getElementsByTagName('a')) {
 		link.style.color = 'hsl(227, 18%, 25%)';
 		link.style.textDecoration = 'underline';
 	}
 
-	for (const link of document.querySelector('.pagination-centered').getElementsByTagName('a')) {
+	for (const link of document.querySelector('div.pagination-centered').getElementsByTagName('a')) {
 		link.style.color = 'hsl(227, 18%,25%)';
 	}
 }
 
 function applyCheckAnonymous() {
 	const checkAnonymous = (inputName) => {
-		const inputAnonymous = document.querySelector(inputName);
+		const inputAnonymous = document.getElementById(inputName);
 		if (inputAnonymous) inputAnonymous.checked = true;
 	};
 
-	checkAnonymous('input#is_anonymous');
+	checkAnonymous('is_anonymous');
 
-	const div = document.querySelector('#app-board-comment-list');
+	const div = document.getElementById('app-board-comment-list');
 	if (!div) return;
 
 	const observer = new MutationObserver(() => {
-		if (document.querySelector('#recomment-write')) checkAnonymous('input#is_anonymous_re');
+		if (document.getElementById('recomment-write')) checkAnonymous('is_anonymous_re');
 	});
 
 	observer.observe(div, { childList: true, subtree: true });
 }
 
 function applyReviewStyle() {
-	const links = document.querySelectorAll('.reviewOpen');
-	if (!links || location.pathname === '/board_fsDQ08') return;
+	if (location.pathname === '/board_fsDQ08') return;
+
+	const container = document.getElementsByClassName('board__list' + (isMobile ? '-m' : '')).item(0);
+	const links = container?.querySelectorAll('a.subject');
+	if (!links) return;
 
 	for (let link of links) {
-		if (link.dataset?.alert === '열람시 10p가 차감됩니다.') continue;
-		if (link.textContent === '') link = link.parentElement.querySelector('a.subject');
-
-		link.style.setProperty('color', '#8488eb', 'important');
+		if (link.dataset.alert !== '열람시 10p가 차감됩니다.') {
+			link.style.setProperty('color', '#8488eb', 'important');
+		}
 	}
 
 	document.addEventListener(
