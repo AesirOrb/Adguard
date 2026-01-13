@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.6.4
+// @version      3.7.0
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -27,6 +27,7 @@ const isMobile =
 	applySearchByReviewer();
 	applyKeydownEvent();
 	applyNotification();
+	applyBoardRefresh();
 })();
 
 function fixPointHistory() {
@@ -74,7 +75,7 @@ function applyReviewStyle() {
 
 	for (let link of links) {
 		if (link.dataset.alert !== '열람시 10p가 차감됩니다.') {
-			link.style.setProperty('color', '#8488eb', 'important');
+			link.style.setProperty('color', '#928aff', 'important');
 		}
 	}
 
@@ -93,7 +94,7 @@ function applyReviewStyle() {
 }
 
 function applyReviewCategory() {
-	if (location.pathname.includes('/board_SjQX31'))
+	if (location.href.includes('board_SjQX31'))
 		for (const link of document.querySelectorAll('nav.category-nav > a.dal-btn')) {
 			if (link.href == 'https://dlm16.net/board_SjQX31') continue;
 			if (link.href == 'https://dlm16.net/board_SjQX31/category/458') continue;
@@ -140,7 +141,7 @@ function applyBoardStyle() {
 
 		const img = tr.querySelector('td.author img');
 		if (img?.alt && (img.alt == '여성회원' || img.alt == '여성회원A' || img.alt == '인증회원')) {
-			a.style.setProperty('color', '#fcc3db', 'important');
+			a.style.setProperty('color', '#f7bacb', 'important');
 		}
 	});
 }
@@ -358,4 +359,115 @@ function applyNotification() {
 	};
 
 	setInterval(loadNotifications, 1000);
+}
+
+function applyBoardRefresh() {
+	const INTERVAL = 10000;
+
+	const style = document.createElement('style');
+	style.textContent = `
+		.new-post-highlight {
+			animation: newhighlight 0.8s ease-out forwards;
+		}
+
+		.updated-post-highlight {
+			animation: updatehighlight 0.8s ease-out forwards;
+		}
+
+		@keyframes newhighlight {
+			0%   { background-color: hsla(58, 84.6%, 62.4%, 0.9); }
+			100% { background-color: transparent; }
+		}
+
+		@keyframes updatehighlight {
+			0%   { background-color: hsla(238, 84.6%, 72.4%, 0.9); }
+			100% { background-color: transparent; }
+		}
+	`;
+
+	document.head.appendChild(style);
+
+	const getPostId = (tr) => {
+		const a = tr.querySelector('td.title a');
+		if (!a) return null;
+		const m = a.getAttribute('href').match(/\/(\d+)(?:\?|$)/);
+		return m ? parseInt(m[1]) : null;
+	};
+
+	const getPostNo = (tr) => {
+		const no = tr.querySelector('td.no')?.innerText.trim();
+		if (!no) return null;
+		const n = parseInt(no);
+		return isNaN(n) ? null : n;
+	};
+
+	const getPostSignature = (tr) => {
+		return [tr.querySelector('.title-link')?.textContent.trim(), tr.querySelector('.tw-text-primary')?.textContent.trim()].join('|');
+	};
+
+	const highlight = (row, cls) => {
+		row.classList.add(cls);
+		row.addEventListener('animationend', () => row.classList.remove(cls), { once: true });
+	};
+
+	const syncTable = (doc) => {
+		const oldTbody = document.querySelector('table.app-board-template-table tbody');
+		const newTbody = doc.querySelector('table.app-board-template-table tbody');
+		if (!oldTbody || !newTbody) return;
+
+		const notices = [...oldTbody.querySelectorAll('tr.notice')];
+		const oldRows = [...oldTbody.querySelectorAll('tr:not(.notice)')];
+		const newRows = [...newTbody.querySelectorAll('tr:not(.notice)')];
+
+		const oldMap = new Map();
+		for (const row of oldRows) {
+			const id = getPostId(row);
+			if (id) oldMap.set(id, row);
+		}
+
+		oldTbody.innerHTML = '';
+
+		for (const n of notices) oldTbody.appendChild(n);
+
+		for (const newRow of newRows) {
+			const id = getPostId(newRow);
+			const oldRow = oldMap.get(id);
+
+			if (!oldRow) {
+				highlight(newRow, 'new-post-highlight');
+				oldTbody.appendChild(newRow);
+			} else {
+				if (getPostSignature(oldRow) !== getPostSignature(newRow)) highlight(newRow, 'updated-post-highlight');
+
+				oldTbody.appendChild(newRow);
+				oldMap.delete(id);
+			}
+		}
+
+		const rows = [...oldTbody.querySelectorAll('tr:not(.notice)')];
+		rows.sort((a, b) => {
+			const na = getPostNo(a);
+			const nb = getPostNo(b);
+			return na === null ? 1 : nb === null ? -1 : nb - na;
+		});
+
+		applyBoardStyle();
+	};
+
+	const loadPosts = async () => {
+		if (!document.querySelector('table.app-board-template-table tbody')) return;
+
+		const res = await fetch(location.href, { credentials: 'include' });
+		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+
+		syncTable(doc);
+	};
+
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible') loadPosts();
+	});
+
+	setInterval(() => {
+		if (document.visibilityState === 'visible') loadPosts();
+	}, INTERVAL);
 }
