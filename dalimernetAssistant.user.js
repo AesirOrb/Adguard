@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.0
+// @version      3.7.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -16,9 +16,9 @@ const isMobile =
 	'use strict';
 
 	fixPointHistory();
-	applyCheckAnonymous();
 	applyReviewStyle();
 	applyReviewCategory();
+	applyCheckAnonymous();
 
 	if (isMobile) return;
 
@@ -46,24 +46,6 @@ function fixPointHistory() {
 	for (const link of document.querySelector('div.pagination-centered').getElementsByTagName('a')) {
 		link.style.color = 'hsl(227, 18%,25%)';
 	}
-}
-
-function applyCheckAnonymous() {
-	const checkAnonymous = (inputName) => {
-		const inputAnonymous = document.getElementById(inputName);
-		if (inputAnonymous) inputAnonymous.checked = true;
-	};
-
-	checkAnonymous('is_anonymous');
-
-	const div = document.getElementById('app-board-comment-list');
-	if (!div) return;
-
-	const observer = new MutationObserver(() => {
-		if (document.getElementById('recomment-write')) checkAnonymous('is_anonymous_re');
-	});
-
-	observer.observe(div, { childList: true, subtree: true });
 }
 
 function applyReviewStyle() {
@@ -94,7 +76,7 @@ function applyReviewStyle() {
 }
 
 function applyReviewCategory() {
-	if (location.href.includes('board_SjQX31'))
+	if (location.href.includes('board_SjQX31')) {
 		for (const link of document.querySelectorAll('nav.category-nav > a.dal-btn')) {
 			if (link.href == 'https://dlm16.net/board_SjQX31') continue;
 			if (link.href == 'https://dlm16.net/board_SjQX31/category/458') continue;
@@ -103,6 +85,7 @@ function applyReviewCategory() {
 
 			link.remove();
 		}
+	}
 
 	document.addEventListener('click', function (e) {
 		const link = e.target.closest('a');
@@ -125,8 +108,27 @@ function applyReviewCategory() {
 	});
 }
 
+function applyCheckAnonymous() {
+	const checkAnonymous = (inputName) => {
+		const inputAnonymous = document.getElementById(inputName);
+		if (inputAnonymous) inputAnonymous.checked = true;
+	};
+
+	checkAnonymous('is_anonymous');
+
+	const div = document.getElementById('app-board-comment-list');
+	if (!div) return;
+
+	const observer = new MutationObserver(() => {
+		if (document.getElementById('recomment-write')) checkAnonymous('is_anonymous_re');
+	});
+
+	observer.observe(div, { childList: true, subtree: true });
+}
+
 function applyBoardStyle() {
-	document.querySelectorAll('table.app-board-template-table > tbody > tr').forEach((tr) => {
+	const tbody = document.querySelector('table.app-board-template-table tbody');
+	tbody?.querySelectorAll('tr:not(.notice)').forEach((tr) => {
 		const td = tr.querySelector('td.title');
 		if (!td) return;
 
@@ -140,10 +142,13 @@ function applyBoardStyle() {
 		});
 
 		const img = tr.querySelector('td.author img');
-		if (img?.alt && (img.alt == '여성회원' || img.alt == '여성회원A' || img.alt == '인증회원')) {
+		if (img?.alt && (img.alt === '여성회원' || img.alt === '여성회원A' || img.alt === '인증회원' || img.alt === '윙키')) {
 			a.style.setProperty('color', '#f7bacb', 'important');
 		}
 	});
+
+	const btnSubmit = document.querySelector('.app-button.app-button-rounded.primary[type=submit]');
+	if (btnSubmit) btnSubmit.textContent = '등록 (Ctrl + Enter)';
 }
 
 function applyReviewSorting() {
@@ -162,7 +167,7 @@ function applyReviewSorting() {
 		header.style.cursor = 'pointer';
 
 		header.addEventListener('click', () => {
-			sortState[type] = sortState[type] === 'asc' ? 'desc' : 'asc';
+			sortState[type] = sortState[type] === 'desc' ? 'asc' : 'desc';
 			sortAllBoards(type, sortState[type]);
 			resetHeaders();
 
@@ -285,6 +290,16 @@ function applyKeydownEvent() {
 			if (btnClose) return btnClose.click();
 		}
 
+		if (e.ctrlKey && e.key.toLowerCase() == 'enter') {
+			if (e.target instanceof HTMLTextAreaElement) {
+				const form = e.target.closest('form');
+				if (form) {
+					form.querySelector('.app-button.primary[type=submit]').onclick();
+					return procFilter(form, insert_comment);
+				}
+			}
+		}
+
 		if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
 
 		if (e.key.toLowerCase() === 'r') {
@@ -295,29 +310,29 @@ function applyKeydownEvent() {
 			}
 		}
 
-		if (e.key.toLowerCase() !== 'q') return;
+		if (e.key.toLowerCase() === 'q') {
+			const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
+			if (isActiveDialog) return;
 
-		const isActiveDialog = document.querySelector('#app-board-search')?.classList.contains('active');
-		if (isActiveDialog) return;
+			const btnReviewShowMore = document.querySelector('#fo_search a');
+			if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
 
-		const btnReviewShowMore = document.querySelector('#fo_search a');
-		if (btnReviewShowMore?.textContent === '계속 검색') return btnReviewShowMore.click();
+			const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
+			if (btnReviewSearch) {
+				e.preventDefault();
+				btnReviewSearch.click();
+				document.querySelector('[rel="js-board-search"] input[type=text]').focus();
+			}
 
-		const btnReviewSearch = document.querySelector('[rel="js-board-search-open"]');
-		if (btnReviewSearch) {
-			e.preventDefault();
-			btnReviewSearch.click();
-			document.querySelector('[rel="js-board-search"] input[type=text]').focus();
-		}
+			const btnShowMore = document.querySelector('#app-board-search a');
+			if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
 
-		const btnShowMore = document.querySelector('#app-board-search a');
-		if (btnShowMore?.textContent === '계속 검색') return btnShowMore.click();
-
-		const btnSearch = document.querySelector('#board-list a.app-icon-button');
-		if (btnSearch) {
-			e.preventDefault();
-			btnSearch.click();
-			document.querySelector('#app-board-search input[type=text]').focus();
+			const btnSearch = document.querySelector('#board-list a.app-icon-button');
+			if (btnSearch) {
+				e.preventDefault();
+				btnSearch.click();
+				document.querySelector('#app-board-search input[type=text]').focus();
+			}
 		}
 	});
 }
