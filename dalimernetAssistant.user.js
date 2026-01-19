@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.1
+// @version      3.7.2
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -8,9 +8,7 @@
 // @run-at       document-end
 // ==/UserScript==
 
-const isDarkMode = /color_scheme_dark/i.test(document.body.className);
-const isMobile =
-	/Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.matchMedia('(pointer: coarse)').matches);
+const isMobile = /Android|iPhone/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && matchMedia('(pointer: coarse)').matches);
 
 (() => {
 	'use strict';
@@ -31,31 +29,41 @@ const isMobile =
 })();
 
 function fixPointHistory() {
-	if (!isDarkMode) return;
+	if (!/dispPointhistoryList/.test(location.search)) return;
 
-	const pointhistory = document.querySelector('table.pointhistory');
-	if (!pointhistory) return;
+	const fixColor = (theme) => {
+		const isDarkMode = theme === 'color_scheme_dark';
+		const pointhistory = document.querySelector('table.pointhistory');
+		pointhistory.caption.style.color = theme === 'color_scheme_dark' ? '#D4D6E1' : '#141721';
 
-	pointhistory.caption.style.color = '#D4D6E1';
+		document.querySelector('ul.nav-tabs > li.active > a').style.color = isDarkMode ? '#141721' : '';
 
-	for (const link of pointhistory.getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%, 25%)';
-		link.style.textDecoration = 'underline';
-	}
+		for (const link of pointhistory.getElementsByTagName('a')) {
+			link.style.color = isDarkMode ? '#141721' : '';
+			link.style.textDecoration = 'underline';
+		}
 
-	for (const link of document.querySelector('div.pagination-centered').getElementsByTagName('a')) {
-		link.style.color = 'hsl(227, 18%,25%)';
-	}
+		for (const link of document.querySelector('div.pagination-centered').getElementsByTagName('a')) {
+			link.style.color = isDarkMode ? '#141721' : '';
+		}
+	};
+
+	let lastTheme = localStorage.currentTheme;
+
+	new MutationObserver(() => {
+		if (localStorage.currentTheme === lastTheme) return;
+		lastTheme = localStorage.currentTheme;
+		fixColor(localStorage.currentTheme);
+	}).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+	fixColor(localStorage.currentTheme);
 }
 
 function applyReviewStyle() {
-	if (location.pathname === '/board_fsDQ08') return;
+	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
 
-	const container = document.getElementsByClassName('board__list' + (isMobile ? '-m' : '')).item(0);
-	const links = container?.querySelectorAll('a.subject');
-	if (!links) return;
-
-	for (let link of links) {
+	const boardList = document.querySelector('div.board__list' + (isMobile ? '-m' : ''));
+	for (const link of boardList?.querySelectorAll('a.subject') || []) {
 		if (link.dataset.alert !== '열람시 10p가 차감됩니다.') {
 			link.style.setProperty('color', '#928aff', 'important');
 		}
@@ -64,14 +72,14 @@ function applyReviewStyle() {
 	document.addEventListener(
 		'click',
 		(e) => {
-			const a = e.target.closest('.reviewOpen');
+			const a = e.target.closest('a.subject.reviewOpen');
 			if (!a) return;
 
 			e.preventDefault();
 			e.stopImmediatePropagation();
 			location.href = a.dataset.link;
 		},
-		true
+		true,
 	);
 }
 
@@ -146,12 +154,11 @@ function applyBoardStyle() {
 			a.style.setProperty('color', '#f7bacb', 'important');
 		}
 	});
-
-	const btnSubmit = document.querySelector('.app-button.app-button-rounded.primary[type=submit]');
-	if (btnSubmit) btnSubmit.textContent = '등록 (Ctrl + Enter)';
 }
 
 function applyReviewSorting() {
+	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
 	const headerRow = document.querySelector('.item-list-header');
 	const headers = headerRow?.querySelectorAll('.item__inner');
@@ -168,7 +175,7 @@ function applyReviewSorting() {
 
 		header.addEventListener('click', () => {
 			sortState[type] = sortState[type] === 'desc' ? 'asc' : 'desc';
-			sortAllBoards(type, sortState[type]);
+			sortBoard(type, sortState[type]);
 			resetHeaders();
 
 			const originalText = header.dataset.originalText;
@@ -211,8 +218,8 @@ function applyReviewSorting() {
 				return parseInt((item.querySelector('.item__inner.item_star')?.textContent || '').replace(/[^0-9]/g, '')) || 0;
 
 			case 'count_bad':
-				let list = item.querySelectorAll('.item__inner.item__count');
-				let last = list[list.length - 1];
+				const list = item.querySelectorAll('.item__inner.item__count');
+				const last = list[list.length - 1];
 
 				return parseInt((last?.textContent || '').replace(/[^0-9]/g, '')) || 0;
 
@@ -221,8 +228,8 @@ function applyReviewSorting() {
 		}
 	}
 
-	function sortBoard(containerSelector, headerType, order) {
-		const container = document.querySelector(containerSelector);
+	function sortBoard(headerType, order) {
+		const container = document.querySelector('.board__list');
 		if (!container) return;
 
 		const items = Array.from(container.querySelectorAll('.item.item-list')).filter((el) => !el.classList.contains('item-list-header'));
@@ -237,18 +244,12 @@ function applyReviewSorting() {
 
 		items.forEach((item) => container.appendChild(item));
 	}
-
-	function sortAllBoards(headerType, order) {
-		sortBoard('.board__list', headerType, order);
-		sortBoard('.board__list-m', headerType, order);
-	}
 }
 
 function applySearchByReviewer() {
-	const users = document.querySelector('.board__list')?.querySelectorAll('.item-list .item__inner.item__user');
-	if (!users) return;
+	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
 
-	for (const user of users) {
+	for (const user of document.querySelectorAll('div.item-list > div.item__inner.item__user') || []) {
 		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
 		if (!textNode) continue;
 
@@ -271,10 +272,10 @@ function applySearchByReviewer() {
 			e.preventDefault();
 			e.stopPropagation();
 
-			const form = document.querySelector('[rel="js-board-search"]');
+			const form = document.querySelector('#fo_search');
 			form.querySelector('select[name=search_target]').value = 'nick_name';
-			form.querySelector('input[type=text]').value = username;
-			form.querySelector('#fo_search').submit();
+			form.querySelector('input[name=search_keyword]').value = username;
+			form.submit();
 		});
 
 		user.replaceChild(span, textNode);
@@ -369,7 +370,7 @@ function applyNotification() {
 			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
 			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
 
-			new Notification(datetime, { body: body }).onclick = () => window.open(link);
+			new Notification(datetime, { body: body }).onclick = () => open(link);
 		}
 	};
 
