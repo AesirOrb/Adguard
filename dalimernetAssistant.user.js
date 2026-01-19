@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.2
+// @version      3.7.3
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -35,15 +35,14 @@ function fixPointHistory() {
 		const isDarkMode = theme === 'color_scheme_dark';
 		const pointhistory = document.querySelector('table.pointhistory');
 		pointhistory.caption.style.color = theme === 'color_scheme_dark' ? '#D4D6E1' : '#141721';
-
 		document.querySelector('ul.nav-tabs > li.active > a').style.color = isDarkMode ? '#141721' : '';
 
-		for (const link of pointhistory.getElementsByTagName('a')) {
+		for (const link of pointhistory.querySelectorAll('a')) {
 			link.style.color = isDarkMode ? '#141721' : '';
 			link.style.textDecoration = 'underline';
 		}
 
-		for (const link of document.querySelector('div.pagination-centered').getElementsByTagName('a')) {
+		for (const link of document.querySelector('.pagination-centered').querySelectorAll('a')) {
 			link.style.color = isDarkMode ? '#141721' : '';
 		}
 	};
@@ -60,7 +59,7 @@ function fixPointHistory() {
 }
 
 function applyReviewStyle() {
-	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
 
 	const boardList = document.querySelector('div.board__list' + (isMobile ? '-m' : ''));
 	for (const link of boardList?.querySelectorAll('a.subject') || []) {
@@ -71,13 +70,13 @@ function applyReviewStyle() {
 
 	document.addEventListener(
 		'click',
-		(e) => {
-			const a = e.target.closest('a.subject.reviewOpen');
-			if (!a) return;
+		(event) => {
+			const reviewOpen = event.target.closest('a.reviewOpen');
+			if (!reviewOpen) return;
 
-			e.preventDefault();
-			e.stopImmediatePropagation();
-			location.href = a.dataset.link;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			location.href = reviewOpen.dataset.link;
 		},
 		true,
 	);
@@ -117,6 +116,9 @@ function applyReviewCategory() {
 }
 
 function applyCheckAnonymous() {
+	const commentList = document.getElementById('app-board-comment-list');
+	if (!commentList) return;
+
 	const checkAnonymous = (inputName) => {
 		const inputAnonymous = document.getElementById(inputName);
 		if (inputAnonymous) inputAnonymous.checked = true;
@@ -124,46 +126,34 @@ function applyCheckAnonymous() {
 
 	checkAnonymous('is_anonymous');
 
-	const div = document.getElementById('app-board-comment-list');
-	if (!div) return;
-
-	const observer = new MutationObserver(() => {
+	new MutationObserver(() => {
 		if (document.getElementById('recomment-write')) checkAnonymous('is_anonymous_re');
-	});
-
-	observer.observe(div, { childList: true, subtree: true });
+	}).observe(commentList, { childList: true, subtree: true });
 }
 
 function applyBoardStyle() {
-	const tbody = document.querySelector('table.app-board-template-table tbody');
+	const tbody = document.querySelector('table.app-board-template-table > tbody');
 	tbody?.querySelectorAll('tr:not(.notice)').forEach((tr) => {
-		const td = tr.querySelector('td.title');
-		if (!td) return;
+		const title = tr.querySelector('td.title');
+		if (!title) return;
 
-		const a = td.querySelector('a[href]');
-		if (!a) return;
-
-		td.style.cursor = 'pointer';
-		td.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			location.href = a.href;
-		});
+		title.style.cursor = 'pointer';
+		title.addEventListener('click', (e) => e.target.closest('a') || (location.href = title.querySelector('a[href]').href));
 
 		const img = tr.querySelector('td.author img');
-		if (img?.alt && (img.alt === '여성회원' || img.alt === '여성회원A' || img.alt === '인증회원' || img.alt === '윙키')) {
-			a.style.setProperty('color', '#f7bacb', 'important');
+		if (img && ['여성회원', '여성회원A', '인증회원', '윙키'].includes(img.alt)) {
+			title.querySelector('a').style.setProperty('color', '#f7bacb', 'important');
 		}
 	});
 }
 
 function applyReviewSorting() {
-	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+
+	const headers = document.querySelectorAll('.item-list-header > .item__inner');
+	if (!headers) return;
 
 	const headerMap = ['number', 'subject', 'rating', 'user', 'date', 'count', 'count_star', 'count_bad'];
-	const headerRow = document.querySelector('.item-list-header');
-	const headers = headerRow?.querySelectorAll('.item__inner');
-	if (!headerRow || !headers) return;
-
 	const sortState = {};
 
 	headers.forEach((header, idx) => {
@@ -176,21 +166,18 @@ function applyReviewSorting() {
 		header.addEventListener('click', () => {
 			sortState[type] = sortState[type] === 'desc' ? 'asc' : 'desc';
 			sortBoard(type, sortState[type]);
-			resetHeaders();
+
+			headers.forEach((h) => {
+				let txt = h.textContent.replace(/[▲▼]/g, '').trim();
+				h.textContent = txt;
+				h.style.color = '';
+				h.dataset.originalText = txt;
+			});
 
 			const originalText = header.dataset.originalText;
 			header.textContent = originalText + (sortState[type] === 'asc' ? ' ▲' : ' ▼');
 			header.style.color = '#5055E3';
 			header.style.fontWeight = '600';
-
-			function resetHeaders() {
-				headers.forEach((h) => {
-					let txt = h.textContent.replace(/[▲▼]/g, '').trim();
-					h.textContent = txt;
-					h.style.color = '';
-					h.dataset.originalText = txt;
-				});
-			}
 		});
 	});
 
@@ -203,7 +190,7 @@ function applyReviewSorting() {
 				return item.querySelector('.item__inner.item__subject')?.textContent.trim() || '';
 
 			case 'rating':
-				return parseInt((item.querySelector('.item__extravar .rating').getAttribute('title') || '').replace(/[^0-9]/g, ''), 10) || 0;
+				return parseInt((item.querySelector('.item__extravar .rating').title || '').replace(/[^0-9]/g, '') || '0');
 
 			case 'user':
 				return item.querySelector('.item__inner.item__user')?.textContent.trim() || '';
@@ -212,16 +199,13 @@ function applyReviewSorting() {
 				return parseInt(item.querySelector('.item__inner.item__number')?.textContent.trim() || '0');
 
 			case 'count':
-				return parseInt((item.querySelector('.item__inner.item__count')?.textContent || '').replace(/[^0-9]/g, '')) || 0;
+				return parseInt((item.querySelector('.item__inner.item__count')?.textContent || '').replace(/[^0-9]/g, '') || '0');
 
 			case 'count_star':
-				return parseInt((item.querySelector('.item__inner.item_star')?.textContent || '').replace(/[^0-9]/g, '')) || 0;
+				return parseInt((item.querySelector('.item__inner.item_star')?.textContent || '').replace(/[^0-9]/g, '') || '0');
 
 			case 'count_bad':
-				const list = item.querySelectorAll('.item__inner.item__count');
-				const last = list[list.length - 1];
-
-				return parseInt((last?.textContent || '').replace(/[^0-9]/g, '')) || 0;
+				return parseInt((item.querySelector('.item__inner.item__count:last-child')?.textContent || '').replace(/[^0-9]/g, '') || '0');
 
 			default:
 				return '';
@@ -229,10 +213,10 @@ function applyReviewSorting() {
 	}
 
 	function sortBoard(headerType, order) {
-		const container = document.querySelector('.board__list');
-		if (!container) return;
+		const board = document.querySelector('.board__list');
+		if (!board) return;
 
-		const items = Array.from(container.querySelectorAll('.item.item-list')).filter((el) => !el.classList.contains('item-list-header'));
+		const items = [...board.querySelectorAll('.item.item-list')].filter((el) => !el.classList.contains('item-list-header'));
 
 		items.sort((a, b) => {
 			const va = extractValue(a, headerType);
@@ -242,14 +226,14 @@ function applyReviewSorting() {
 			else return order === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
 		});
 
-		items.forEach((item) => container.appendChild(item));
+		items.forEach((item) => board.appendChild(item));
 	}
 }
 
 function applySearchByReviewer() {
-	if (document.querySelector('a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
 
-	for (const user of document.querySelectorAll('div.item-list > div.item__inner.item__user') || []) {
+	for (const user of document.querySelectorAll('.item-list > .item__inner.item__user') || []) {
 		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
 		if (!textNode) continue;
 
@@ -278,9 +262,8 @@ function applySearchByReviewer() {
 			form.submit();
 		});
 
-		user.replaceChild(span, textNode);
-
 		user.style.cursor = 'default';
+		user.replaceChild(span, textNode);
 	}
 }
 
@@ -344,31 +327,30 @@ function applyNotification() {
 	}
 
 	const loadNotifications = async () => {
-		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
 		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
 		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
 
 		localStorage.setItem('notificationLastLoaded', Date.now());
 
+		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
 		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
 		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-		const items = [...doc.querySelectorAll('.app-member-list > li')];
+		const lists = [...doc.querySelectorAll('.app-member-list > li')];
 
-		for (const li of items) {
-			const date = li.querySelector('div > div:nth-child(2) > span:first-child').innerText;
-			const time = li.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
+		for (const list of lists) {
+			const date = list.querySelector('div > div:nth-child(2) > span:nth-child(1)').innerText;
+			const time = list.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
 			const datetime = `${date} ${time}`;
 
-			const isUnread = li.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
+			const isUnread = list.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
 			if (!isUnread) continue;
 
-			const body = li.querySelector('a').innerText;
-			const link = li.querySelector('a').href || null;
+			const body = list.querySelector('a').innerText;
+			const link = list.querySelector('a').href || null;
 			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
 			if (!id || notificationIDs.includes(id)) continue;
 
-			if (notificationIDs.length > 10) notificationIDs.splice(0, notificationIDs.length - 10);
-			localStorage.setItem('notificationIDs', JSON.stringify([...notificationIDs, id]));
+			localStorage.setItem('notificationIDs', JSON.stringify([id, ...notificationIDs].slice(0, 10)));
 
 			new Notification(datetime, { body: body }).onclick = () => open(link);
 		}
@@ -378,112 +360,69 @@ function applyNotification() {
 }
 
 function applyBoardRefresh() {
-	const INTERVAL = 10000;
+	document.head.appendChild(
+		Object.assign(document.createElement('style'), {
+			textContent: `
+				.new-post-highlight {
+					animation: newhighlight 0.8s ease-out forwards;
+				}
 
-	const style = document.createElement('style');
-	style.textContent = `
-		.new-post-highlight {
-			animation: newhighlight 0.8s ease-out forwards;
-		}
+				.updated-post-highlight {
+					animation: updatehighlight 0.8s ease-out forwards;
+				}
 
-		.updated-post-highlight {
-			animation: updatehighlight 0.8s ease-out forwards;
-		}
+				@keyframes newhighlight {
+					0%   { background-color: hsla(58, 84.6%, 62.4%, 0.9); }
+					100% { background-color: transparent; }
+				}
 
-		@keyframes newhighlight {
-			0%   { background-color: hsla(58, 84.6%, 62.4%, 0.9); }
-			100% { background-color: transparent; }
-		}
+				@keyframes updatehighlight {
+					0%   { background-color: hsla(238, 84.6%, 72.4%, 0.9); }
+					100% { background-color: transparent; }
+				}
+			`,
+		}),
+	);
 
-		@keyframes updatehighlight {
-			0%   { background-color: hsla(238, 84.6%, 72.4%, 0.9); }
-			100% { background-color: transparent; }
-		}
-	`;
-
-	document.head.appendChild(style);
-
-	const getPostId = (tr) => {
-		const a = tr.querySelector('td.title a');
-		if (!a) return null;
-		const m = a.getAttribute('href').match(/\/(\d+)(?:\?|$)/);
-		return m ? parseInt(m[1]) : null;
-	};
-
-	const getPostNo = (tr) => {
-		const no = tr.querySelector('td.no')?.innerText.trim();
-		if (!no) return null;
-		const n = parseInt(no);
-		return isNaN(n) ? null : n;
-	};
-
-	const getPostSignature = (tr) => {
-		return [tr.querySelector('.title-link')?.textContent.trim(), tr.querySelector('.tw-text-primary')?.textContent.trim()].join('|');
-	};
-
-	const highlight = (row, cls) => {
-		row.classList.add(cls);
-		row.addEventListener('animationend', () => row.classList.remove(cls), { once: true });
-	};
-
-	const syncTable = (doc) => {
+	const getPostId = (tr) => parseInt(tr.querySelector('td.title a')?.href.match(/\/(\d+)(?:\?|$)/)?.[1] || '0') || null;
+	const getPostSign = (tr) => [tr.querySelector('.title-link')?.textContent.trim(), tr.querySelector('.tw-text-primary')?.textContent.trim()].join('|');
+	const highlight = (row, cls) => (row.classList.add(cls), row.addEventListener('animationend', () => row.classList.remove(cls), { once: true }));
+	const sync = (doc) => {
 		const oldTbody = document.querySelector('table.app-board-template-table tbody');
 		const newTbody = doc.querySelector('table.app-board-template-table tbody');
 		if (!oldTbody || !newTbody) return;
 
+		const posts = new Map([...oldTbody.querySelectorAll('tr:not(.notice)')].map((r) => [getPostId(r), r]).filter((v) => v[0]));
 		const notices = [...oldTbody.querySelectorAll('tr.notice')];
-		const oldRows = [...oldTbody.querySelectorAll('tr:not(.notice)')];
-		const newRows = [...newTbody.querySelectorAll('tr:not(.notice)')];
-
-		const oldMap = new Map();
-		for (const row of oldRows) {
-			const id = getPostId(row);
-			if (id) oldMap.set(id, row);
-		}
 
 		oldTbody.innerHTML = '';
 
-		for (const n of notices) oldTbody.appendChild(n);
+		notices.forEach((n) => oldTbody.appendChild(n));
 
-		for (const newRow of newRows) {
-			const id = getPostId(newRow);
-			const oldRow = oldMap.get(id);
+		for (const newRow of [...newTbody.querySelectorAll('tr:not(.notice)')]) {
+			const postId = getPostId(newRow);
+			const oldRow = posts.get(postId);
 
 			if (!oldRow) {
 				highlight(newRow, 'new-post-highlight');
-				oldTbody.appendChild(newRow);
-			} else {
-				if (getPostSignature(oldRow) !== getPostSignature(newRow)) highlight(newRow, 'updated-post-highlight');
-
-				oldTbody.appendChild(newRow);
-				oldMap.delete(id);
+			} else if (getPostSign(oldRow) !== getPostSign(newRow)) {
+				highlight(newRow, 'updated-post-highlight');
 			}
-		}
 
-		const rows = [...oldTbody.querySelectorAll('tr:not(.notice)')];
-		rows.sort((a, b) => {
-			const na = getPostNo(a);
-			const nb = getPostNo(b);
-			return na === null ? 1 : nb === null ? -1 : nb - na;
-		});
+			oldTbody.appendChild(newRow);
+		}
 
 		applyBoardStyle();
 	};
 
-	const loadPosts = async () => {
+	const load = async () => {
 		if (!document.querySelector('table.app-board-template-table tbody')) return;
-
 		const res = await fetch(location.href, { credentials: 'include' });
 		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
 
-		syncTable(doc);
+		sync(doc);
 	};
 
-	document.addEventListener('visibilitychange', () => {
-		if (document.visibilityState === 'visible') loadPosts();
-	});
-
-	setInterval(() => {
-		if (document.visibilityState === 'visible') loadPosts();
-	}, INTERVAL);
+	document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && load());
+	setInterval(() => document.visibilityState === 'visible' && load(), 10000);
 }
