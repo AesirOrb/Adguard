@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.3
+// @version      3.7.5
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -63,9 +63,7 @@ function applyReviewStyle() {
 
 	const boardList = document.querySelector('div.board__list' + (isMobile ? '-m' : ''));
 	for (const link of boardList?.querySelectorAll('a.subject') || []) {
-		if (link.dataset.alert !== '열람시 10p가 차감됩니다.') {
-			link.style.setProperty('color', '#928aff', 'important');
-		}
+		if (!link.onclick) link.style.setProperty('color', '#928aff', 'important');
 	}
 
 	document.addEventListener(
@@ -116,7 +114,7 @@ function applyReviewCategory() {
 }
 
 function applyCheckAnonymous() {
-	const commentList = document.getElementById('app-board-comment-list');
+	const commentList = document.getElementById('write_comment');
 	if (!commentList) return;
 
 	const checkAnonymous = (inputName) => {
