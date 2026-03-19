@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.5
+// @version      3.7.6
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -8,11 +8,9 @@
 // @run-at       document-end
 // ==/UserScript==
 
-const isMobile = /Android|iPhone/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && matchMedia('(pointer: coarse)').matches);
+const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 
 (() => {
-	'use strict';
-
 	fixPointHistory();
 	applyReviewStyle();
 	applyReviewCategory();
@@ -69,12 +67,12 @@ function applyReviewStyle() {
 	document.addEventListener(
 		'click',
 		(event) => {
-			const reviewOpen = event.target.closest('a.reviewOpen');
+			const reviewOpen = event.target.closest('a.subject');
 			if (!reviewOpen) return;
 
 			event.preventDefault();
 			event.stopImmediatePropagation();
-			location.href = reviewOpen.dataset.link;
+			location.href = reviewOpen.href;
 		},
 		true,
 	);
