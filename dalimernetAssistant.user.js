@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.6
+// @version      3.7.6.1
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
+// @match        *://dlm16.net/*
+// @grant        none
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
-// @match        *://dlm16.net/*
-// @run-at       document-end
 // ==/UserScript==
 
 const isMobile = /Android|iPhone/i.test(navigator.userAgent);
