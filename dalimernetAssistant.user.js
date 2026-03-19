@@ -22,7 +22,7 @@ const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 	applyReviewSorting();
 	applySearchByReviewer();
 	applyKeydownEvent();
-	applyNotification();
+	// applyNotification();
 	applyBoardRefresh();
 })();
 
