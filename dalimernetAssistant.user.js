@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.6.1
+// @version      3.7.7
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @match        *://dlm16.net/*
 // @grant        none
@@ -20,9 +20,9 @@ const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 
 	applyBoardStyle();
 	applyReviewSorting();
-	applySearchByReviewer();
+	// applySearchByReviewer();
 	applyKeydownEvent();
-	// applyNotification();
+	applyNotification();
 	applyBoardRefresh();
 })();
 
@@ -66,12 +66,12 @@ function applyReviewStyle() {
 
 	document.addEventListener(
 		'click',
-		(event) => {
-			const reviewOpen = event.target.closest('a.subject');
+		(e) => {
+			const reviewOpen = e.target instanceof HTMLAnchorElement && e.target.matches('.subject, .reviewOpen') ? e.target : null;
 			if (!reviewOpen) return;
 
-			event.preventDefault();
-			event.stopImmediatePropagation();
+			e.preventDefault();
+			e.stopImmediatePropagation();
 			location.href = reviewOpen.href;
 		},
 		true,
@@ -331,22 +331,19 @@ function applyNotification() {
 		const notificationIDs = JSON.parse(localStorage.getItem('notificationIDs') || '[]');
 		const res = await fetch('/index.php?act=dispNcenterliteNotifyList', { credentials: 'include' });
 		const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-		const lists = [...doc.querySelectorAll('.app-member-list > li')];
+		const lists = [...doc.querySelectorAll('table > tbody > tr')];
 
 		for (const list of lists) {
-			const date = list.querySelector('div > div:nth-child(2) > span:nth-child(1)').innerText;
-			const time = list.querySelector('div > div:nth-child(2) > span:nth-child(2)').innerText;
-			const datetime = `${date} ${time}`;
-
-			const isUnread = list.querySelector('div > div:nth-child(3) > span').innerText == '읽지 않음';
+			const datetime = list.querySelector('td:nth-child(5)').innerText.trim().replaceAll('\t', '').replace('\n', ' ');
+			const isUnread = list.querySelector('td:nth-child(4) > .history-auth').innerText.trim() !== '읽음';
 			if (!isUnread) continue;
 
-			const body = list.querySelector('a').innerText;
-			const link = list.querySelector('a').href || null;
+			const body = list.querySelector('td:nth-child(3)').innerText;
+			const link = list.querySelector('td:nth-child(3) > a').href || null;
 			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
 			if (!id || notificationIDs.includes(id)) continue;
 
-			localStorage.setItem('notificationIDs', JSON.stringify([id, ...notificationIDs].slice(0, 10)));
+			localStorage.setItem('notificationIDs', JSON.stringify([id, ...notificationIDs].slice(0, 20)));
 
 			new Notification(datetime, { body: body }).onclick = () => open(link);
 		}
