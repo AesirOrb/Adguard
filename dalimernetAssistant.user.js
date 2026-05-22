@@ -57,7 +57,7 @@ function fixPointHistory() {
 }
 
 function applyReviewStyle() {
-	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== location.origin + '/board_BPPP82') return;
 
 	const boardList = document.querySelector('div.board__list' + (isMobile ? '-m' : ''));
 	for (const link of boardList?.querySelectorAll('a.subject') || []) {
@@ -81,10 +81,10 @@ function applyReviewStyle() {
 function applyReviewCategory() {
 	if (location.href.includes('board_SjQX31')) {
 		for (const link of document.querySelectorAll('nav.category-nav > a.dal-btn')) {
-			if (link.href == 'https://dlm16.net/board_SjQX31') continue;
-			if (link.href == 'https://dlm16.net/board_SjQX31/category/458') continue;
-			if (link.href == 'https://dlm16.net/board_SjQX31/category/465') continue;
-			if (link.href == 'https://dlm16.net/board_SjQX31/category/466') continue;
+			if (link.href == location.origin + '/board_SjQX31') continue;
+			if (link.href == location.origin + '/board_SjQX31/category/458') continue;
+			if (link.href == location.origin + '/board_SjQX31/category/465') continue;
+			if (link.href == location.origin + '/board_SjQX31/category/466') continue;
 
 			link.remove();
 		}
@@ -144,7 +144,7 @@ function applyBoardStyle() {
 }
 
 function applyReviewSorting() {
-	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== location.origin + '/board_BPPP82') return;
 
 	const headers = document.querySelectorAll('.item-list-header > .item__inner');
 	if (!headers) return;
@@ -227,7 +227,7 @@ function applyReviewSorting() {
 }
 
 function applySearchByReviewer() {
-	if (document.querySelector('ul.gnb a.is-selected')?.href !== 'https://dlm16.net/board_BPPP82') return;
+	if (document.querySelector('ul.gnb a.is-selected')?.href !== location.origin + '/board_BPPP82') return;
 
 	for (const user of document.querySelectorAll('.item-list > .item__inner.item__user') || []) {
 		const textNode = [...user.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
