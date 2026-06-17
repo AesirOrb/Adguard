@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.8
+// @version      3.7.9
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
-// @match        *://dlm17.net/*
+// @match        *://dalmer.info/*
+// @match        *://dlm18.net/*
+// @match        *://dlm*.net/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
 // @downloadURL  https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
