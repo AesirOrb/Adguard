@@ -1,9 +1,8 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.7.9
+// @version      3.8.0
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @match        *://dalmer.info/*
-// @match        *://dlm18.net/*
 // @match        *://dlm*.net/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/AesirOrb/Adguard/refs/heads/main/dalimernetAssistant.user.js
@@ -188,7 +187,7 @@ function applyReviewSorting() {
 				return item.querySelector('.item__inner.item__subject')?.textContent.trim() || '';
 
 			case 'rating':
-				return parseInt((item.querySelector('.item__extravar .rating').title || '').replace(/[^0-9]/g, '') || '0');
+				return parseInt((item.querySelector('.item__extravar > .rating')?.title || '').replace(/[^0-9]/g, '') || '0');
 
 			case 'user':
 				return item.querySelector('.item__inner.item__user')?.textContent.trim() || '';
@@ -214,7 +213,7 @@ function applyReviewSorting() {
 		const board = document.querySelector('.board__list');
 		if (!board) return;
 
-		const items = [...board.querySelectorAll('.item.item-list')].filter((el) => !el.classList.contains('item-list-header'));
+		const items = [...board.querySelectorAll('.item.item-list:not(.item-notice)')];
 
 		items.sort((a, b) => {
 			const va = extractValue(a, headerType);
@@ -340,14 +339,15 @@ function applyNotification() {
 			const isUnread = list.querySelector('td:nth-child(4) > .history-auth').innerText.trim() !== '읽음';
 			if (!isUnread) continue;
 
-			const body = list.querySelector('td:nth-child(3)').innerText;
-			const link = list.querySelector('td:nth-child(3) > a').href || null;
-			const id = link.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
+			const body = list.querySelector('td:nth-child(3) > a').innerText;
+			const text = body.innerText;
+			const href = body.href || null;
+			const id = href.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
 			if (!id || notificationIDs.includes(id)) continue;
 
 			localStorage.setItem('notificationIDs', JSON.stringify([id, ...notificationIDs].slice(0, 20)));
 
-			new Notification(datetime, { body: body }).onclick = () => open(link);
+			new Notification(datetime, { body: body }).onclick = () => open(href);
 		}
 	};
 
