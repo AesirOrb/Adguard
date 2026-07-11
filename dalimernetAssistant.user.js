@@ -419,5 +419,5 @@ function applyBoardRefresh(interval = 10) {
 	};
 
 	document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && load());
-	setInterval(() => document.visibilityState === 'visible' && load(), interval * 10);
+	setInterval(() => document.visibilityState === 'visible' && load(), interval * 1000);
 }
