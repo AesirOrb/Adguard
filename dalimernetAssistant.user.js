@@ -23,8 +23,8 @@ const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 	applyReviewSorting();
 	// applySearchByReviewer();
 	applyKeydownEvent();
-	applyNotification();
-	applyBoardRefresh();
+	applyNotification(30);
+	applyBoardRefresh(10);
 })();
 
 function fixPointHistory() {
@@ -318,14 +318,14 @@ function applyKeydownEvent() {
 	});
 }
 
-function applyNotification() {
+function applyNotification(interval = 30) {
 	if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
 		Notification.requestPermission();
 	}
 
 	const loadNotifications = async () => {
 		const notificationLastLoaded = parseInt(localStorage.getItem('notificationLastLoaded') || '0', 10);
-		if (Date.now() - notificationLastLoaded < 30 * 1000) return;
+		if (Date.now() - notificationLastLoaded < interval * 1000) return;
 
 		localStorage.setItem('notificationLastLoaded', Date.now());
 
@@ -354,7 +354,7 @@ function applyNotification() {
 	setInterval(loadNotifications, 1000);
 }
 
-function applyBoardRefresh() {
+function applyBoardRefresh(interval = 10) {
 	document.head.appendChild(
 		Object.assign(document.createElement('style'), {
 			textContent: `
@@ -419,5 +419,5 @@ function applyBoardRefresh() {
 	};
 
 	document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && load());
-	setInterval(() => document.visibilityState === 'visible' && load(), 10000);
+	setInterval(() => document.visibilityState === 'visible' && load(), interval * 10);
 }
