@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Dalimernet Assistant
-// @version      3.8.0
+// @version      3.8.2
 // @description  달리머넷에 여러가지 기능을 추가하거나 개선합니다.
 // @match        *://dalmer.info/*
 // @match        *://dlm*.net/*
@@ -58,7 +58,7 @@ function fixPointHistory() {
 }
 
 function applyReviewStyle() {
-	if (document.querySelector('ul.gnb a.is-selected')?.href !== location.origin + '/board_BPPP82') return;
+	if (!document.querySelector('ul.gnb a.is-selected')?.href.includes('board_BPPP82')) return;
 
 	const boardList = document.querySelector('div.board__list' + (isMobile ? '-m' : ''));
 	for (const link of boardList?.querySelectorAll('a.subject') || []) {
@@ -339,15 +339,15 @@ function applyNotification(interval = 30) {
 			const isUnread = list.querySelector('td:nth-child(4) > .history-auth').innerText.trim() !== '읽음';
 			if (!isUnread) continue;
 
-			const body = list.querySelector('td:nth-child(3) > a').innerText;
+			const body = list.querySelector('td:nth-child(3) > a');
 			const text = body.innerText;
 			const href = body.href || null;
-			const id = href.match(/(?<=comment_srl=)(?<id>\d+)/)?.groups.id;
+			const id = href.match(/((?<=comment_srl=)(?<id>\d+))|(?<=notify=)(?<id>\w+)/)?.groups.id;
 			if (!id || notificationIDs.includes(id)) continue;
 
 			localStorage.setItem('notificationIDs', JSON.stringify([id, ...notificationIDs].slice(0, 20)));
 
-			new Notification(datetime, { body: body }).onclick = () => open(href);
+			new Notification(datetime, { body: text }).onclick = () => open(href);
 		}
 	};
 
